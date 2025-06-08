@@ -1,0 +1,4 @@
+# Ce fichier permet de garder le dossier uploads dans Git
+# Les fichiers uploadés seront ignorés par .gitignore
+# même s'il est vide. Les fichiers uploadés seront ignorés par .gitignore
+# mais le dossier lui-même doit exister pour l'application. 

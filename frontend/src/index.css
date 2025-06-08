@@ -1,0 +1,111 @@
+/* Import du système de design Lexia */
+@import './styles/lexia-design-system.css';
+
+/* Import de la police Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: 59 130 246; /* blue-500 */
+    --color-secondary: 99 102 241; /* indigo-500 */
+    --color-accent: 139 92 246; /* violet-500 */
+    --color-background: 249 250 251;
+    --color-surface: 255 255 255;
+    --color-text: 17 24 39;
+    --color-text-light: 107 114 128;
+  }
+
+  body {
+    @apply bg-background text-text font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+  }
+
+  h1 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/90 focus:ring-primary;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-secondary/90 focus:ring-secondary;
+  }
+
+  .btn-outline {
+    @apply border border-gray-300 bg-transparent hover:bg-gray-50 focus:ring-gray-300;
+  }
+
+  .card {
+    @apply bg-surface rounded-lg shadow-md p-6 transition-shadow hover:shadow-lg;
+  }
+
+  .form-group {
+    @apply mb-4;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-text mb-1;
+  }
+
+  .form-input {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors;
+  }
+  
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+  }
+}
+
+@layer utilities {
+  .text-primary {
+    @apply text-blue-600;
+  }
+  
+  .text-primary-dark {
+    @apply text-blue-800;
+  }
+  
+  .bg-primary {
+    @apply bg-blue-600;
+  }
+  
+  .hover\:text-primary:hover {
+    @apply text-blue-600;
+  }
+  
+  .hover\:border-primary:hover {
+    @apply border-blue-600;
+  }
+  
+  .border-primary {
+    @apply border-blue-600;
+  }
+} 

@@ -1,0 +1,34 @@
+{
+  "name": "lexiav3",
+  "version": "1.0.0",
+  "description": "LexiaV3 - AI Assistant for Dyscalculia and Mathematical Learning Difficulties",
+  "scripts": {
+    "start": "docker-compose up -d",
+    "stop": "docker-compose down",
+    "build": "docker-compose build",
+    "restart": "docker-compose restart",
+    "logs": "docker-compose logs -f",
+    "clean": "docker system prune -af",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "deploy": "bash deploy-lexiav3.sh"
+  },
+  "keywords": [
+    "dyscalculia",
+    "education",
+    "ai-assistant",
+    "react",
+    "node",
+    "mongodb",
+    "docker"
+  ],
+  "author": "Tachfine Amnay",
+  "license": "Proprietary",
+  "private": true,
+  "engines": {
+    "node": ">=18",
+    "npm": ">=9"
+  }
+}

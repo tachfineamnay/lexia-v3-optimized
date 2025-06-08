@@ -1,0 +1,1 @@
+/home/LexiaV3/public_html/LexiaV3-deploy.sh
