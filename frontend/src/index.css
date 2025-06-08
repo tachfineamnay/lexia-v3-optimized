@@ -1,111 +1,112 @@
-/* Import du système de design Lexia */
-@import './styles/lexia-design-system.css';
-
-/* Import de la police Inter */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --color-primary: 59 130 246; /* blue-500 */
-    --color-secondary: 99 102 241; /* indigo-500 */
-    --color-accent: 139 92 246; /* violet-500 */
-    --color-background: 249 250 251;
-    --color-surface: 255 255 255;
-    --color-text: 17 24 39;
-    --color-text-light: 107 114 128;
-  }
+/* Reset et styles de base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  body {
-    @apply bg-background text-text font-sans antialiased;
-  }
+html {
+  scroll-behavior: smooth;
+}
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-bold;
-  }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f9fafb;
+  color: #111827;
+}
 
-  h1 {
-    @apply text-3xl md:text-4xl;
-  }
+/* Styles globaux pour l'application */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 
-  h2 {
-    @apply text-2xl md:text-3xl;
-  }
+/* Utilitaires personnalisés */
+.container-app {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
 
-  h3 {
-    @apply text-xl md:text-2xl;
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@layer components {
-  .btn {
-    @apply px-4 py-2 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
-  }
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
 
-  .btn-primary {
-    @apply bg-primary text-white hover:bg-primary/90 focus:ring-primary;
-  }
+/* Scrollbar personnalisée */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
 
-  .btn-secondary {
-    @apply bg-secondary text-white hover:bg-secondary/90 focus:ring-secondary;
-  }
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
 
-  .btn-outline {
-    @apply border border-gray-300 bg-transparent hover:bg-gray-50 focus:ring-gray-300;
-  }
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
 
-  .card {
-    @apply bg-surface rounded-lg shadow-md p-6 transition-shadow hover:shadow-lg;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
 
-  .form-group {
-    @apply mb-4;
-  }
+/* Focus styles pour l'accessibilité */
+:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
 
-  .form-label {
-    @apply block text-sm font-medium text-text mb-1;
-  }
+/* Styles pour les liens */
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
-  .form-input {
-    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors;
-  }
-  
-  /* Animations */
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
+/* Styles pour les boutons */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Utilitaires de mise en page responsive */
+@media (max-width: 640px) {
+  .container-app {
+    padding: 0 0.75rem;
   }
 }
 
-@layer utilities {
-  .text-primary {
-    @apply text-blue-600;
-  }
-  
-  .text-primary-dark {
-    @apply text-blue-800;
-  }
-  
-  .bg-primary {
-    @apply bg-blue-600;
-  }
-  
-  .hover\:text-primary:hover {
-    @apply text-blue-600;
-  }
-  
-  .hover\:border-primary:hover {
-    @apply border-blue-600;
-  }
-  
-  .border-primary {
-    @apply border-blue-600;
-  }
+/* Classes utilitaires pour corriger les problèmes d'affichage */
+.text-render-fix {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Fix pour les problèmes de débordement */
+.overflow-fix {
+  max-width: 100vw;
+  overflow-x: hidden;
 } 
