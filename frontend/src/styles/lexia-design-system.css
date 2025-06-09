@@ -3,94 +3,277 @@
    =========================== */
 
 :root {
-  /* Couleurs principales inspirées du logo */
-  --lexia-orange: #F59E0B;
-  --lexia-pink: #EC4899;
-  --lexia-blue: #3B82F6;
-  --lexia-cyan: #06B6D4;
+  /* Couleurs principales */
+  --lexia-primary: #2563eb;      /* Bleu principal */
+  --lexia-primary-dark: #1d4ed8; /* Bleu foncé */
+  --lexia-primary-light: #60a5fa; /* Bleu clair */
   
-  /* Couleurs neutres pour la lisibilité */
-  --lexia-dark: #111827;
-  --lexia-gray-900: #1F2937;
-  --lexia-gray-700: #374151;
-  --lexia-gray-500: #6B7280;
-  --lexia-gray-300: #D1D5DB;
-  --lexia-gray-100: #F3F4F6;
-  --lexia-white: #FFFFFF;
+  /* Couleurs secondaires */
+  --lexia-secondary: #64748b;    /* Gris neutre */
+  --lexia-secondary-dark: #475569;
+  --lexia-secondary-light: #94a3b8;
   
-  /* Couleurs sémantiques */
-  --lexia-success: #10B981;
-  --lexia-warning: #F59E0B;
-  --lexia-error: #EF4444;
-  --lexia-info: #3B82F6;
+  /* Couleurs de feedback */
+  --lexia-success: #22c55e;      /* Vert */
+  --lexia-warning: #f59e0b;      /* Orange */
+  --lexia-error: #ef4444;        /* Rouge */
+  --lexia-info: #3b82f6;         /* Bleu info */
   
-  /* Ombres et effets */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  /* Couleurs de fond */
+  --lexia-bg-primary: #ffffff;   /* Blanc */
+  --lexia-bg-secondary: #f8fafc; /* Gris très clair */
+  --lexia-bg-tertiary: #f1f5f9;  /* Gris clair */
   
-  /* Typographie optimisée pour la lisibilité */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  /* Couleurs de texte */
+  --lexia-text-primary: #1e293b;   /* Presque noir */
+  --lexia-text-secondary: #475569; /* Gris foncé */
+  --lexia-text-tertiary: #64748b;  /* Gris moyen */
+  --lexia-text-light: #f8fafc;     /* Blanc */
   
   /* Espacements */
-  --space-xs: 0.5rem;
-  --space-sm: 0.75rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2rem;
-  --space-2xl: 3rem;
+  --lexia-spacing-xs: 0.25rem;   /* 4px */
+  --lexia-spacing-sm: 0.5rem;    /* 8px */
+  --lexia-spacing-md: 1rem;      /* 16px */
+  --lexia-spacing-lg: 1.5rem;    /* 24px */
+  --lexia-spacing-xl: 2rem;      /* 32px */
   
-  /* Animations */
-  --transition-fast: 150ms ease-in-out;
-  --transition-base: 200ms ease-in-out;
-  --transition-slow: 300ms ease-in-out;
+  /* Bordures */
+  --lexia-radius-sm: 0.25rem;    /* 4px */
+  --lexia-radius-md: 0.375rem;   /* 6px */
+  --lexia-radius-lg: 0.5rem;     /* 8px */
   
-  /* Border radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-full: 9999px;
+  /* Ombres */
+  --lexia-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --lexia-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --lexia-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  
+  /* Transitions */
+  --lexia-transition: all 0.2s ease-in-out;
+}
+
+/* Classes utilitaires Tailwind */
+@layer utilities {
+  /* Typographie */
+  .lexia-heading-1 {
+    @apply text-3xl font-bold text-gray-900 mb-4;
+  }
+  
+  .lexia-heading-2 {
+    @apply text-2xl font-semibold text-gray-800 mb-3;
+  }
+  
+  .lexia-heading-3 {
+    @apply text-xl font-medium text-gray-700 mb-2;
+  }
+  
+  .lexia-text {
+    @apply text-base text-gray-600 leading-relaxed;
+  }
+  
+  .lexia-text-sm {
+    @apply text-sm text-gray-500;
+  }
+  
+  /* Boutons */
+  .lexia-btn {
+    @apply inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200;
+  }
+  
+  .lexia-btn-primary {
+    @apply lexia-btn bg-blue-600 text-white border-transparent hover:bg-blue-700 focus:ring-blue-500;
+  }
+  
+  .lexia-btn-secondary {
+    @apply lexia-btn bg-white text-gray-700 border-gray-300 hover:bg-gray-50 focus:ring-blue-500;
+  }
+  
+  .lexia-btn-danger {
+    @apply lexia-btn bg-red-600 text-white border-transparent hover:bg-red-700 focus:ring-red-500;
+  }
+  
+  /* Formulaires */
+  .lexia-input {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm;
+  }
+  
+  .lexia-label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+  
+  .lexia-error {
+    @apply mt-1 text-sm text-red-600;
+  }
+  
+  /* Cartes */
+  .lexia-card {
+    @apply bg-white rounded-lg shadow-md p-6;
+  }
+  
+  .lexia-card-header {
+    @apply border-b border-gray-200 pb-4 mb-4;
+  }
+  
+  /* Badges */
+  .lexia-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .lexia-badge-success {
+    @apply lexia-badge bg-green-100 text-green-800;
+  }
+  
+  .lexia-badge-warning {
+    @apply lexia-badge bg-yellow-100 text-yellow-800;
+  }
+  
+  .lexia-badge-error {
+    @apply lexia-badge bg-red-100 text-red-800;
+  }
+  
+  /* Alertes */
+  .lexia-alert {
+    @apply p-4 rounded-md border-l-4;
+  }
+  
+  .lexia-alert-success {
+    @apply lexia-alert bg-green-50 border-green-500 text-green-700;
+  }
+  
+  .lexia-alert-warning {
+    @apply lexia-alert bg-yellow-50 border-yellow-500 text-yellow-700;
+  }
+  
+  .lexia-alert-error {
+    @apply lexia-alert bg-red-50 border-red-500 text-red-700;
+  }
+  
+  .lexia-alert-info {
+    @apply lexia-alert bg-blue-50 border-blue-500 text-blue-700;
+  }
+  
+  /* Navigation */
+  .lexia-nav-link {
+    @apply inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200;
+  }
+  
+  .lexia-nav-link-active {
+    @apply lexia-nav-link border-blue-500 text-blue-600;
+  }
+  
+  .lexia-nav-link-inactive {
+    @apply lexia-nav-link border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700;
+  }
+  
+  /* Layout */
+  .lexia-container {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .lexia-section {
+    @apply py-8 sm:py-12;
+  }
+  
+  /* Accessibilité */
+  .lexia-sr-only {
+    @apply sr-only;
+  }
+  
+  .lexia-focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+}
+
+/* Animations */
+@keyframes lexia-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes lexia-slide-up {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.lexia-animate-fade-in {
+  animation: lexia-fade-in 0.2s ease-out;
+}
+
+.lexia-animate-slide-up {
+  animation: lexia-slide-up 0.3s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .lexia-container {
+    @apply px-4;
+  }
+  
+  .lexia-section {
+    @apply py-6;
+  }
+  
+  .lexia-heading-1 {
+    @apply text-2xl;
+  }
+  
+  .lexia-heading-2 {
+    @apply text-xl;
+  }
+  
+  .lexia-heading-3 {
+    @apply text-lg;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --lexia-bg-primary: #1a1a1a;
+    --lexia-bg-secondary: #2d2d2d;
+    --lexia-bg-tertiary: #3d3d3d;
+    
+    --lexia-text-primary: #f8fafc;
+    --lexia-text-secondary: #e2e8f0;
+    --lexia-text-tertiary: #cbd5e1;
+  }
+  
+  .lexia-card {
+    @apply bg-gray-800;
+  }
+  
+  .lexia-input {
+    @apply bg-gray-700 border-gray-600 text-white;
+  }
+  
+  .lexia-label {
+    @apply text-gray-300;
+  }
 }
 
 /* Typography avec excellent contraste */
 .lexia-heading-1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--lexia-dark);
-  letter-spacing: -0.02em;
+  @apply text-3xl font-bold text-gray-900;
 }
 
 .lexia-heading-2 {
-  font-size: 2rem;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--lexia-dark);
-  letter-spacing: -0.01em;
+  @apply text-2xl font-semibold text-gray-900;
+}
+
+.lexia-heading-3 {
+  @apply text-xl font-semibold text-gray-900;
 }
 
 .lexia-body {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--lexia-gray-700);
+  @apply text-base text-gray-700;
 }
 
 .lexia-caption {
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: var(--lexia-gray-500);
+  @apply text-sm text-gray-500;
 }
 
 /* Composants de base */
 .lexia-card {
-  background: var(--lexia-white);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: var(--space-xl);
-  transition: box-shadow var(--transition-base);
+  @apply bg-white rounded-lg shadow-sm p-6;
 }
 
 .lexia-card:hover {
@@ -129,49 +312,28 @@
 
 /* Progress indicator avec gradient coloré */
 .lexia-progress-bar {
-  height: 4px;
-  background: var(--lexia-gray-100);
-  border-radius: var(--radius-full);
-  overflow: hidden;
+  @apply w-full h-2 bg-gray-200 rounded-full overflow-hidden;
 }
 
 .lexia-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, 
-    var(--lexia-orange) 0%, 
-    var(--lexia-pink) 33%, 
-    var(--lexia-blue) 66%, 
-    var(--lexia-cyan) 100%
-  );
-  transition: width var(--transition-slow);
+  @apply h-full bg-blue-600 transition-all duration-300;
 }
 
 /* Tooltips informatifs */
 .lexia-tooltip {
-  position: relative;
-  display: inline-block;
+  @apply relative inline-block;
 }
 
 .lexia-tooltip-content {
-  position: absolute;
-  bottom: 125%;
+  @apply invisible absolute z-10 p-2 text-sm text-white bg-gray-900 rounded-md opacity-0 transition-opacity duration-200;
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--lexia-dark);
-  color: var(--lexia-white);
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: all var(--transition-fast);
-  z-index: 1000;
+  margin-bottom: 0.5rem;
 }
 
 .lexia-tooltip:hover .lexia-tooltip-content {
-  opacity: 1;
-  visibility: visible;
+  @apply visible opacity-100;
 }
 
 /* Modal avec backdrop */
@@ -221,12 +383,7 @@
 }
 
 .lexia-input {
-  width: 100%;
-  padding: var(--space-sm) var(--space-md);
-  border: 2px solid var(--lexia-gray-300);
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  transition: all var(--transition-fast);
+  @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm;
 }
 
 .lexia-input:focus {
@@ -247,9 +404,9 @@
 }
 
 @keyframes slideUp {
-  from { 
+  from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -299,4 +456,112 @@
 
 .lexia-helper-error {
   color: var(--lexia-error);
+}
+
+/* Badges */
+.lexia-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.lexia-badge-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.lexia-badge-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.lexia-badge-error {
+  @apply bg-red-100 text-red-800;
+}
+
+.lexia-badge-info {
+  @apply bg-blue-100 text-blue-800;
+}
+
+/* Tables */
+.lexia-table {
+  @apply min-w-full divide-y divide-gray-200;
+}
+
+.lexia-table-header {
+  @apply bg-gray-50;
+}
+
+.lexia-table-header-cell {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+
+.lexia-table-body {
+  @apply bg-white divide-y divide-gray-200;
+}
+
+.lexia-table-row {
+  @apply hover:bg-gray-50;
+}
+
+.lexia-table-cell {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-500;
+}
+
+/* Alerts */
+.lexia-alert {
+  @apply p-4 rounded-md;
+}
+
+.lexia-alert-success {
+  @apply bg-green-50 text-green-800;
+}
+
+.lexia-alert-warning {
+  @apply bg-yellow-50 text-yellow-800;
+}
+
+.lexia-alert-error {
+  @apply bg-red-50 text-red-800;
+}
+
+.lexia-alert-info {
+  @apply bg-blue-50 text-blue-800;
+}
+
+/* Loading States */
+.lexia-loading {
+  @apply animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500;
+}
+
+/* File Upload */
+.lexia-file-upload {
+  @apply block w-full text-sm text-gray-500
+    file:mr-4 file:py-2 file:px-4
+    file:rounded-md file:border-0
+    file:text-sm file:font-semibold
+    file:bg-blue-50 file:text-blue-700
+    hover:file:bg-blue-100;
+}
+
+/* Pagination */
+.lexia-pagination {
+  @apply relative z-0 inline-flex rounded-md shadow-sm -space-x-px;
+}
+
+.lexia-pagination-button {
+  @apply relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50;
+}
+
+.lexia-pagination-button-active {
+  @apply z-10 bg-blue-50 border-blue-500 text-blue-600;
+}
+
+/* Filters */
+.lexia-filter-button {
+  @apply px-3 py-2 rounded-md text-sm font-medium;
+}
+
+.lexia-filter-button-active {
+  @apply bg-blue-100 text-blue-700;
+}
+
+.lexia-filter-button-inactive {
+  @apply bg-gray-100 text-gray-700 hover:bg-gray-200;
 } 

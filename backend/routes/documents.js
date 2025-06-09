@@ -5,6 +5,10 @@ const { authMiddleware } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { isAuthenticated, isAdmin } = require('../middleware/auth');
+const Dossier = require('../models/dossier');
+const documentGenerator = require('../services/documentGenerator');
+const { logger } = require('../utils/logger');
 
 // Configure storage for uploaded files
 const storage = multer.diskStorage({
@@ -144,6 +148,139 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Générer un document VAE
+router.post('/generate/:dossierId', isAuthenticated, async (req, res) => {
+  const operationId = logger.startOperation('generate_dossier_document');
+  
+  try {
+    const { dossierId } = req.params;
+    const { format = 'pdf' } = req.query;
+
+    // Vérifier que le format est valide
+    if (!['pdf', 'docx'].includes(format)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Format de document invalide. Utilisez "pdf" ou "docx".'
+      });
+    }
+
+    // Récupérer le dossier
+    const dossier = await Dossier.findById(dossierId)
+      .populate('user', 'firstName lastName')
+      .populate('questionSet');
+
+    if (!dossier) {
+      return res.status(404).json({
+        success: false,
+        message: 'Dossier non trouvé'
+      });
+    }
+
+    // Vérifier que l'utilisateur a le droit d'accéder au dossier
+    if (!req.user.isAdmin && dossier.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Accès non autorisé à ce dossier'
+      });
+    }
+
+    // Générer le document
+    const document = await documentGenerator.generateDocument(dossier, format);
+
+    logger.endOperation(operationId, {
+      dossierId,
+      format,
+      fileName: document.fileName
+    });
+
+    res.json({
+      success: true,
+      message: 'Document généré avec succès',
+      data: {
+        fileName: document.fileName,
+        downloadUrl: `/api/documents/download/${dossierId}?format=${format}`
+      }
+    });
+  } catch (error) {
+    logger.logError('Document generation failed', {
+      operationId,
+      error: error.message,
+      stack: error.stack
+    });
+
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la génération du document',
+      error: error.message
+    });
+  }
+});
+
+// Télécharger un document VAE
+router.get('/download/:dossierId', isAuthenticated, async (req, res) => {
+  const operationId = logger.startOperation('download_dossier_document');
+  
+  try {
+    const { dossierId } = req.params;
+    const { format = 'pdf' } = req.query;
+
+    // Vérifier que le format est valide
+    if (!['pdf', 'docx'].includes(format)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Format de document invalide. Utilisez "pdf" ou "docx".'
+      });
+    }
+
+    // Récupérer le dossier
+    const dossier = await Dossier.findById(dossierId)
+      .populate('user', 'firstName lastName');
+
+    if (!dossier) {
+      return res.status(404).json({
+        success: false,
+        message: 'Dossier non trouvé'
+      });
+    }
+
+    // Vérifier que l'utilisateur a le droit d'accéder au dossier
+    if (!req.user.isAdmin && dossier.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Accès non autorisé à ce dossier'
+      });
+    }
+
+    // Générer le document s'il n'existe pas déjà
+    const document = await documentGenerator.generateDocument(dossier, format);
+
+    logger.endOperation(operationId, {
+      dossierId,
+      format,
+      fileName: document.fileName
+    });
+
+    // Envoyer le fichier
+    res.download(document.filePath, document.fileName, {
+      headers: {
+        'Content-Type': document.mimeType
+      }
+    });
+  } catch (error) {
+    logger.logError('Document download failed', {
+      operationId,
+      error: error.message,
+      stack: error.stack
+    });
+
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors du téléchargement du document',
+      error: error.message
+    });
   }
 });
 

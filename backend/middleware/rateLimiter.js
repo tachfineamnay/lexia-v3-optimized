@@ -49,9 +49,33 @@ const aiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Limiteur pour la route de connexion
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 tentatives maximum
+  message: {
+    error: 'Trop de tentatives de connexion. Veuillez réessayer dans 15 minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Limiteur pour la route de mot de passe oublié
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 heure
+  max: 3, // 3 tentatives maximum
+  message: {
+    error: 'Trop de demandes de réinitialisation. Veuillez réessayer dans 1 heure.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 module.exports = {
   generalLimiter,
   authLimiter,
   uploadLimiter,
-  aiLimiter
+  aiLimiter,
+  loginLimiter,
+  forgotPasswordLimiter
 }; 

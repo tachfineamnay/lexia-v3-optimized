@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
+const { loginLimiter, forgotPasswordLimiter } = require('../middleware/rateLimiter');
 
 // Import du middleware auth avec gestion d'erreur
 let auth;
@@ -102,6 +104,9 @@ router.post('/register', async (req, res) => {
 
     await user.save();
 
+    // Envoyer l'email de vérification
+    await sendEmail(email, 'verification', emailVerificationToken);
+
     // Générer JWT
     const payload = {
       user: {
@@ -123,9 +128,6 @@ router.post('/register', async (req, res) => {
       process.env.REFRESH_TOKEN_SECRET || 'refreshsecretfallback',
       { expiresIn: '7d' }
     );
-
-    // Logique d'envoi d'email de vérification (à implémenter)
-    // sendVerificationEmail(user.email, emailVerificationToken);
 
     // Retourner les informations de l'utilisateur sans le mot de passe
     const userProfile = user.getProfile();
@@ -152,7 +154,7 @@ router.post('/register', async (req, res) => {
  * @desc    Authentification d'un utilisateur
  * @access  Public
  */
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     const userAgent = req.headers['user-agent'] || 'unknown';
@@ -189,6 +191,14 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ 
         success: false,
         message: 'Identifiants invalides' 
+      });
+    }
+
+    // Vérifier si l'utilisateur est vérifié
+    if (!user.isEmailVerified) {
+      return res.status(401).json({ 
+        success: false,
+        message: 'Veuillez vérifier votre email avant de vous connecter' 
       });
     }
 
@@ -502,40 +512,26 @@ router.put('/password', auth, async (req, res) => {
  * @desc    Vérifier l'email d'un utilisateur
  * @access  Public
  */
-router.post('/verify-email/:token', async (req, res) => {
+router.get('/verify-email/:token', async (req, res) => {
   try {
-    const { token } = req.params;
-
-    // Rechercher l'utilisateur avec ce token
-    const user = await User.findOne({ 
-      emailVerificationToken: token,
+    const user = await User.findOne({
+      emailVerificationToken: req.params.token,
       emailVerificationExpires: { $gt: Date.now() }
     });
 
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Token de vérification invalide ou expiré'
-      });
+      return res.status(400).json({ error: 'Token invalide ou expiré' });
     }
 
-    // Activer le compte
     user.isEmailVerified = true;
     user.emailVerificationToken = undefined;
     user.emailVerificationExpires = undefined;
     await user.save();
 
-    res.json({
-      success: true,
-      message: 'Email vérifié avec succès. Votre compte est maintenant activé.'
-    });
-  } catch (err) {
-    console.error('Erreur de vérification d\'email:', err.message);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur serveur',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+    res.json({ message: 'Email vérifié avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de la vérification de l\'email:', error);
+    res.status(500).json({ error: 'Erreur lors de la vérification de l\'email' });
   }
 });
 
@@ -544,7 +540,7 @@ router.post('/verify-email/:token', async (req, res) => {
  * @desc    Demander une réinitialisation de mot de passe
  * @access  Public
  */
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -571,8 +567,8 @@ router.post('/forgot-password', async (req, res) => {
     user.resetPasswordExpires = Date.now() + 3600000; // 1 heure
     await user.save();
 
-    // Logique d'envoi d'email (à implémenter)
-    // sendPasswordResetEmail(user.email, resetToken);
+    // Envoyer l'email de réinitialisation
+    await sendEmail(email, 'resetPassword', resetToken);
 
     res.json({
       success: true,

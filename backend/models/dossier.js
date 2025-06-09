@@ -145,7 +145,7 @@ const dossierSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['draft', 'review', 'completed', 'submitted', 'archived'],
+    enum: ['draft', 'generating', 'completed', 'error'],
     default: 'draft'
   },
   sections: [sectionSchema],
@@ -250,7 +250,42 @@ const dossierSchema = new mongoose.Schema({
     response: String,
     section: String,
     modelUsed: String
-  }]
+  }],
+  answers: {
+    type: Map,
+    of: mongoose.Schema.Types.Mixed,
+    default: new Map()
+  },
+  content: {
+    analyse: {
+      difficultes: [String],
+      points_forts: [String],
+      niveau: String
+    },
+    recommandations: {
+      exercices: [String],
+      strategies: [String],
+      ressources: [String]
+    },
+    plan_action: {
+      objectifs: [String],
+      etapes: [String],
+      suivi: String
+    }
+  },
+  error: {
+    message: String,
+    details: mongoose.Schema.Types.Mixed
+  },
+  metadata: {
+    generationTime: Number,
+    modelVersion: String,
+    promptTokens: Number,
+    completionTokens: Number
+  },
+  completedAt: {
+    type: Date
+  }
 }, {
   timestamps: true
 });
@@ -262,10 +297,15 @@ dossierSchema.index({ 'collaborators.user': 1 });
 dossierSchema.index({ status: 1, deadline: 1 });
 dossierSchema.index({ 'sections.sectionId': 1 });
 dossierSchema.index({ tags: 1 });
+dossierSchema.index({ user: 1, status: 1 });
+dossierSchema.index({ createdAt: -1 });
 
 // Middleware avant sauvegarde - mise à jour de la date d'édition
 dossierSchema.pre('save', function(next) {
   this.lastEdited = new Date();
+  if (this.isModified('status') && this.status === 'completed') {
+    this.completedAt = new Date();
+  }
   next();
 });
 
@@ -426,6 +466,50 @@ dossierSchema.statics.searchByText = function(userId, searchText, limit = 20) {
     .populate('user', 'firstName lastName email')
     .exec();
 };
+
+dossierSchema.statics.findLatestDraft = function(userId) {
+  return this.findOne({ 
+    user: userId,
+    status: 'draft'
+  }).sort({ updatedAt: -1 });
+};
+
+dossierSchema.statics.findLatestCompleted = function(userId) {
+  return this.findOne({ 
+    user: userId,
+    status: 'completed'
+  }).sort({ completedAt: -1 });
+};
+
+// Méthodes d'instance
+dossierSchema.methods.markAsGenerating = function() {
+  this.status = 'generating';
+  return this.save();
+};
+
+dossierSchema.methods.markAsCompleted = function(content, metadata) {
+  this.status = 'completed';
+  this.content = content;
+  this.metadata = metadata;
+  return this.save();
+};
+
+dossierSchema.methods.markAsError = function(error) {
+  this.status = 'error';
+  this.error = {
+    message: error.message,
+    details: error.stack
+  };
+  return this.save();
+};
+
+// Validation
+dossierSchema.pre('validate', function(next) {
+  if (this.status === 'completed' && !this.content) {
+    this.invalidate('content', 'Le contenu est requis pour un dossier complété');
+  }
+  next();
+});
 
 const Dossier = mongoose.model('Dossier', dossierSchema);
 

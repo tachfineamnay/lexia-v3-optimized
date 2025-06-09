@@ -7,6 +7,7 @@ const { authMiddleware } = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
 const QuestionSet = require('../models/questionSet');
 const Document = require('../models/document');
+const { logger } = require('../utils/logger');
 
 // Configuration du stockage pour les uploads JSON
 const storage = multer.diskStorage({
@@ -44,6 +45,8 @@ const upload = multer({
  * @access  Admin
  */
 router.post('/upload', authMiddleware, adminAuth, upload.single('file'), async (req, res) => {
+  const operationId = logger.startOperation('upload_question_set');
+  
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -62,6 +65,12 @@ router.post('/upload', authMiddleware, adminAuth, upload.single('file'), async (
       // Supprimer le fichier en cas d'erreur de parsing
       fs.unlinkSync(req.file.path);
       
+      logger.logError('JSON parsing error', {
+        operationId,
+        error: parseError.message,
+        filePath: req.file.path
+      });
+      
       return res.status(400).json({
         success: false,
         message: 'Format JSON invalide',
@@ -69,15 +78,47 @@ router.post('/upload', authMiddleware, adminAuth, upload.single('file'), async (
       });
     }
     
-    // Validation de base de la structure
-    if (!questionsData.title || !questionsData.targetCertification || !Array.isArray(questionsData.sections)) {
-      // Supprimer le fichier en cas d'erreur de structure
+    // Validation de la structure
+    const validationErrors = validateQuestionSet(questionsData);
+    if (validationErrors.length > 0) {
+      // Supprimer le fichier en cas d'erreur de validation
       fs.unlinkSync(req.file.path);
+      
+      logger.logError('Question set validation failed', {
+        operationId,
+        errors: validationErrors
+      });
       
       return res.status(400).json({
         success: false,
-        message: 'Structure JSON invalide. Le fichier doit contenir au moins title, targetCertification et un tableau sections'
+        message: 'Structure JSON invalide',
+        errors: validationErrors
       });
+    }
+    
+    // Vérifier si un questionnaire actif existe déjà pour cette certification
+    if (questionsData.isActive) {
+      const existingActive = await QuestionSet.findOne({
+        targetCertification: questionsData.targetCertification,
+        isActive: true
+      });
+      
+      if (existingActive) {
+        // Supprimer le fichier
+        fs.unlinkSync(req.file.path);
+        
+        logger.logError('Active question set already exists', {
+          operationId,
+          targetCertification: questionsData.targetCertification,
+          existingId: existingActive._id
+        });
+        
+        return res.status(400).json({
+          success: false,
+          message: `Un questionnaire actif existe déjà pour la certification ${questionsData.targetCertification}`,
+          existingQuestionSet: existingActive.getSimplified()
+        });
+      }
     }
     
     // Créer un nouvel ensemble de questions
@@ -87,7 +128,7 @@ router.post('/upload', authMiddleware, adminAuth, upload.single('file'), async (
       targetCertification: questionsData.targetCertification,
       certificationLevel: questionsData.certificationLevel || '',
       version: questionsData.version || '1.0.0',
-      isActive: true,
+      isActive: questionsData.isActive || false,
       createdBy: req.user.id,
       updatedBy: req.user.id,
       sections: questionsData.sections.map(section => ({
@@ -117,8 +158,14 @@ router.post('/upload', authMiddleware, adminAuth, upload.single('file'), async (
     // Sauvegarder dans la base de données
     await questionSet.save();
     
-    // Supprimer le fichier après traitement réussi (optionnel)
-    // fs.unlinkSync(req.file.path);
+    // Supprimer le fichier après traitement réussi
+    fs.unlinkSync(req.file.path);
+    
+    logger.endOperation(operationId, {
+      questionSetId: questionSet._id,
+      sectionsCount: questionSet.sections.length,
+      totalQuestions: questionSet.sections.reduce((acc, section) => acc + section.questions.length, 0)
+    });
     
     res.status(201).json({
       success: true,
@@ -126,7 +173,11 @@ router.post('/upload', authMiddleware, adminAuth, upload.single('file'), async (
       questionSet: questionSet.getSimplified()
     });
   } catch (error) {
-    console.error('Erreur d\'importation des questions:', error);
+    logger.logError('Question set upload failed', {
+      operationId,
+      error: error.message,
+      stack: error.stack
+    });
     
     // Nettoyer le fichier en cas d'erreur
     if (req.file && fs.existsSync(req.file.path)) {
@@ -430,5 +481,224 @@ router.get('/:id/export', authMiddleware, adminAuth, async (req, res) => {
     });
   }
 });
+
+/**
+ * @route   GET /api/questions/all
+ * @desc    Lister tous les questionnaires (admin only)
+ * @access  Admin
+ */
+router.get('/all', authMiddleware, adminAuth, async (req, res) => {
+  const operationId = logger.startOperation('list_all_question_sets');
+  
+  try {
+    // Filtres et pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+    const skip = (page - 1) * limit;
+    
+    // Construire le filtre
+    const filter = {};
+    
+    // Filtre par certification cible
+    if (req.query.certification) {
+      filter.targetCertification = { $regex: req.query.certification, $options: 'i' };
+    }
+    
+    // Filtre par niveau
+    if (req.query.level) {
+      filter.certificationLevel = { $regex: req.query.level, $options: 'i' };
+    }
+    
+    // Filtre actif/inactif
+    if (req.query.active !== undefined) {
+      filter.isActive = req.query.active === 'true';
+    }
+    
+    // Recherche textuelle
+    if (req.query.search) {
+      filter.$or = [
+        { title: { $regex: req.query.search, $options: 'i' } },
+        { description: { $regex: req.query.search, $options: 'i' } },
+        { targetCertification: { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+    
+    // Compter le total pour la pagination
+    const total = await QuestionSet.countDocuments(filter);
+    
+    // Récupérer les ensembles de questions
+    const questionSets = await QuestionSet.find(filter)
+      .select('-sections.questions') // Exclure les questions détaillées pour alléger
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('createdBy', 'firstName lastName email')
+      .populate('updatedBy', 'firstName lastName email');
+    
+    logger.endOperation(operationId, {
+      total,
+      page,
+      limit,
+      filter
+    });
+    
+    res.json({
+      success: true,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      questionSets: questionSets.map(qs => qs.getSimplified())
+    });
+  } catch (error) {
+    logger.logError('Failed to list question sets', {
+      operationId,
+      error: error.message,
+      stack: error.stack
+    });
+    
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des ensembles de questions',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * @route   POST /api/questions/:id/activate
+ * @desc    Activer/désactiver un questionnaire (1 seul actif à la fois)
+ * @access  Admin
+ */
+router.post('/:id/activate', authMiddleware, adminAuth, async (req, res) => {
+  const operationId = logger.startOperation('activate_question_set');
+  
+  try {
+    const { id } = req.params;
+    const { active } = req.body;
+    
+    if (typeof active !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'Le paramètre "active" doit être un booléen'
+      });
+    }
+    
+    // Trouver le questionnaire
+    const questionSet = await QuestionSet.findById(id);
+    
+    if (!questionSet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Questionnaire introuvable'
+      });
+    }
+    
+    // Si on veut activer le questionnaire
+    if (active) {
+      // Vérifier s'il existe déjà un questionnaire actif pour cette certification
+      const existingActive = await QuestionSet.findOne({
+        _id: { $ne: id },
+        targetCertification: questionSet.targetCertification,
+        isActive: true
+      });
+      
+      if (existingActive) {
+        logger.logError('Active question set already exists', {
+          operationId,
+          targetCertification: questionSet.targetCertification,
+          existingId: existingActive._id
+        });
+        
+        return res.status(400).json({
+          success: false,
+          message: `Un questionnaire actif existe déjà pour la certification ${questionSet.targetCertification}`,
+          existingQuestionSet: existingActive.getSimplified()
+        });
+      }
+    }
+    
+    // Mettre à jour le statut
+    questionSet.isActive = active;
+    questionSet.updatedBy = req.user.id;
+    
+    await questionSet.save();
+    
+    logger.endOperation(operationId, {
+      questionSetId: id,
+      active,
+      targetCertification: questionSet.targetCertification
+    });
+    
+    res.json({
+      success: true,
+      message: `Questionnaire ${active ? 'activé' : 'désactivé'} avec succès`,
+      questionSet: questionSet.getSimplified()
+    });
+  } catch (error) {
+    logger.logError('Failed to activate question set', {
+      operationId,
+      error: error.message,
+      stack: error.stack
+    });
+    
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de l\'activation/désactivation du questionnaire',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// Fonction utilitaire pour valider la structure d'un ensemble de questions
+function validateQuestionSet(data) {
+  const errors = [];
+  
+  // Validation des champs obligatoires
+  if (!data.title) {
+    errors.push('Le titre est obligatoire');
+  }
+  
+  if (!data.targetCertification) {
+    errors.push('La certification cible est obligatoire');
+  }
+  
+  if (!Array.isArray(data.sections) || data.sections.length === 0) {
+    errors.push('Au moins une section est requise');
+  } else {
+    // Validation des sections
+    data.sections.forEach((section, sectionIndex) => {
+      if (!section.title) {
+        errors.push(`La section ${sectionIndex + 1} doit avoir un titre`);
+      }
+      
+      if (!Array.isArray(section.questions) || section.questions.length === 0) {
+        errors.push(`La section "${section.title}" doit contenir au moins une question`);
+      } else {
+        // Validation des questions
+        section.questions.forEach((question, questionIndex) => {
+          if (!question.text) {
+            errors.push(`La question ${questionIndex + 1} de la section "${section.title}" doit avoir un texte`);
+          }
+          
+          if (question.type === 'select' || question.type === 'multiselect' || question.type === 'radio' || question.type === 'checkbox') {
+            if (!Array.isArray(question.options) || question.options.length === 0) {
+              errors.push(`La question "${question.text}" doit avoir des options car elle est de type ${question.type}`);
+            } else {
+              // Validation des options
+              question.options.forEach((option, optionIndex) => {
+                if (!option.value || !option.label) {
+                  errors.push(`L'option ${optionIndex + 1} de la question "${question.text}" doit avoir une valeur et un libellé`);
+                }
+              });
+            }
+          }
+        });
+      }
+    });
+  }
+  
+  return errors;
+}
 
 module.exports = router; 

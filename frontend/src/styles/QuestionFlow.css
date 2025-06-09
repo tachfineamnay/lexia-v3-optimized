@@ -1,0 +1,98 @@
+/* Styles pour la barre de progression */
+.progress-bar {
+  transition: width 0.3s ease-in-out;
+}
+
+/* Styles pour les questions */
+.question-container {
+  transition: all 0.3s ease-in-out;
+}
+
+.question-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Styles pour les textarea */
+.textarea-container {
+  position: relative;
+}
+
+.textarea-container textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Styles pour les boutons de navigation */
+.nav-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.nav-button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+/* Styles pour les messages d'encouragement */
+.encouragement-message {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Styles pour les états de focus et d'erreur */
+.input-error {
+  border-color: #ef4444;
+}
+
+.input-error:focus {
+  ring-color: #ef4444;
+}
+
+/* Styles pour l'accessibilité */
+.focus-visible:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Styles pour le responsive */
+@media (max-width: 640px) {
+  .question-container {
+    padding: 1rem;
+  }
+
+  .nav-button {
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* Styles pour les animations de transition entre les sections */
+.section-transition-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.section-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.section-transition-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.section-transition-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 300ms, transform 300ms;
+} 

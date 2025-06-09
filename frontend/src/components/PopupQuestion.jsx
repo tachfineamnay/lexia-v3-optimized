@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import vertexAiService from '../api/vertexAiService';
+import { useToast } from '../hooks/useToast';
 
 function PopupQuestion({ 
   isOpen, 
@@ -17,6 +18,8 @@ function PopupQuestion({
   const [isShowingAdvice, setIsShowingAdvice] = useState(false);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [aiSuggestion, setAiSuggestion] = useState(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
@@ -41,8 +44,9 @@ function PopupQuestion({
   };
 
   const handleSave = async () => {
-    // Clear any previous error
+    // Clear any previous error and suggestion
     setAiError(null);
+    setAiSuggestion(null);
     
     // Save the answer first
     onSave(answer);
@@ -60,19 +64,32 @@ function PopupQuestion({
           userData
         });
         
-        // If successful, add the generated content to the response
+        // If successful, show the suggestion
         if (result && result.suggestion) {
-          onSave(result.suggestion.text);
+          setAiSuggestion(result.suggestion.text);
+          showToast('Suggestion IA disponible', 'info');
         }
       } catch (error) {
         console.error('Error generating response:', error);
         setAiError(error.message || 'IA indisponible');
+        showToast('Erreur lors de la génération de la suggestion', 'error');
       } finally {
         setIsGeneratingResponse(false);
       }
     }
-    
-    handleClose();
+  };
+
+  const handleUseSuggestion = () => {
+    if (aiSuggestion) {
+      setAnswer(aiSuggestion);
+      setAiSuggestion(null);
+      showToast('Suggestion appliquée', 'success');
+    }
+  };
+
+  const handleIgnoreSuggestion = () => {
+    setAiSuggestion(null);
+    showToast('Suggestion ignorée', 'info');
   };
 
   const handleOverlayClick = (e) => {
@@ -123,12 +140,47 @@ function PopupQuestion({
             />
             
             {aiError && (
-              <div className="mt-2 text-sm text-red-600">
-                <span className="font-medium">Erreur IA:</span> {aiError}
+              <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                <div className="flex items-center text-red-700">
+                  <svg className="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-medium">Erreur IA:</span> {aiError}
+                </div>
               </div>
             )}
 
-            {question.aiAssist && (
+            {aiSuggestion && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3 flex-1">
+                    <h5 className="text-sm font-medium text-blue-800 mb-2">Suggestion IA</h5>
+                    <p className="text-sm text-blue-700 whitespace-pre-wrap">{aiSuggestion}</p>
+                    <div className="mt-3 flex space-x-3">
+                      <button
+                        onClick={handleUseSuggestion}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        Utiliser la suggestion
+                      </button>
+                      <button
+                        onClick={handleIgnoreSuggestion}
+                        className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        Ignorer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {question.aiAssist && !aiSuggestion && !aiError && (
               <div className="mt-2 text-xs text-gray-500 flex items-center">
                 <svg className="mr-1 h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
@@ -177,7 +229,7 @@ function PopupQuestion({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Enregistrement...
+                Génération en cours...
               </>
             ) : (
               "Enregistrer"

@@ -856,4 +856,114 @@ router.delete('/:id/collaborate/:userId', authMiddleware, async (req, res) => {
   }
 });
 
+// Sauvegarder un brouillon
+router.post('/draft', authMiddleware, async (req, res) => {
+  try {
+    const { answers } = req.body;
+    const userId = req.user.id;
+
+    // Rechercher un brouillon existant
+    let draft = await Dossier.findOne({ 
+      user: userId,
+      status: 'draft'
+    });
+
+    if (draft) {
+      // Mettre à jour le brouillon existant
+      draft.answers = answers;
+      draft.updatedAt = Date.now();
+      await draft.save();
+    } else {
+      // Créer un nouveau brouillon
+      draft = new Dossier({
+        user: userId,
+        answers,
+        status: 'draft'
+      });
+      await draft.save();
+    }
+
+    res.json({ 
+      message: 'Brouillon sauvegardé avec succès',
+      draftId: draft._id
+    });
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde du brouillon:', error);
+    res.status(500).json({ 
+      error: 'Erreur lors de la sauvegarde du brouillon'
+    });
+  }
+});
+
+// Récupérer le dernier brouillon
+router.get('/draft', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const draft = await Dossier.findOne({ 
+      user: userId,
+      status: 'draft'
+    }).sort({ updatedAt: -1 });
+
+    if (!draft) {
+      return res.status(404).json({ 
+        error: 'Aucun brouillon trouvé'
+      });
+    }
+
+    res.json({ 
+      answers: draft.answers,
+      lastUpdated: draft.updatedAt
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération du brouillon:', error);
+    res.status(500).json({ 
+      error: 'Erreur lors de la récupération du brouillon'
+    });
+  }
+});
+
+// Générer le dossier final
+router.post('/generate', authMiddleware, async (req, res) => {
+  try {
+    const { answers } = req.body;
+    const userId = req.user.id;
+
+    // Vérifier si un brouillon existe
+    const draft = await Dossier.findOne({ 
+      user: userId,
+      status: 'draft'
+    });
+
+    if (draft) {
+      // Mettre à jour le brouillon avec les dernières réponses
+      draft.answers = answers;
+      draft.status = 'generating';
+      await draft.save();
+
+      // Générer le dossier avec l'IA
+      const generatedContent = await vertexAiService.generateDossier(answers);
+
+      // Mettre à jour le dossier avec le contenu généré
+      draft.content = generatedContent;
+      draft.status = 'completed';
+      draft.completedAt = Date.now();
+      await draft.save();
+
+      res.json({ 
+        message: 'Dossier généré avec succès',
+        dossierId: draft._id
+      });
+    } else {
+      res.status(404).json({ 
+        error: 'Aucun brouillon trouvé'
+      });
+    }
+  } catch (error) {
+    console.error('Erreur lors de la génération du dossier:', error);
+    res.status(500).json({ 
+      error: 'Erreur lors de la génération du dossier'
+    });
+  }
+});
+
 module.exports = router; 
