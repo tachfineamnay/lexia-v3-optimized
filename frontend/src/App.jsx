@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, BrowserRouter as Router } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 
 // Pages
@@ -71,94 +71,92 @@ const AdminRoute = ({ children }) => {
 
 function App() {
   return (
-    <Router>
-      <ToastProvider>
-        <AuthProvider>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Navbar />
-            <main className="container mx-auto px-4 py-8">
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/verify-email/:token" element={<EmailConfirmation />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password/:token" element={<ResetPassword />} />
-                
-                {/* Protected routes */}
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/documents" element={
-                  <ProtectedRoute>
-                    <Documents />
-                  </ProtectedRoute>
-                } />
-                {/* Redirection pour les anciennes routes de documents */}
-                <Route path="/documents/new" element={<Navigate to="/upload-documents" />} />
-                <Route path="/documents/:id" element={<Navigate to="/documents" />} />
-                
-                <Route path="/profile" element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } />
-                
-                {/* VAE Process Routes */}
-                <Route path="/upload-documents" element={
-                  <ProtectedRoute>
-                    <UploadDocuments />
-                  </ProtectedRoute>
-                } />
-                <Route path="/question-flow" element={
-                  <ProtectedRoute>
-                    <QuestionFlow />
-                  </ProtectedRoute>
-                } />
-                <Route path="/final-dossier" element={
-                  <ProtectedRoute>
-                    <FinalDossier />
-                  </ProtectedRoute>
-                } />
-                <Route path="/vae-creation" element={
-                  <ProtectedRoute>
-                    <VAECreation />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Admin routes */}
-                <Route path="/admin" element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                } />
-                <Route path="/admin/vertex" element={
-                  <AdminRoute>
-                    <VertexConfig />
-                  </AdminRoute>
-                } />
-                <Route path="/admin/questions" element={
-                  <AdminRoute>
-                    <AdminUploadQuestions />
-                  </AdminRoute>
-                } />
-                <Route path="/admin/config" element={
-                  <AdminRoute>
-                    <AdminConfig />
-                  </AdminRoute>
-                } />
-                
-                {/* 404 route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-          </div>
-        </AuthProvider>
-      </ToastProvider>
-    </Router>
+    <ToastProvider>
+      <AuthProvider>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+          <Navbar />
+          <main className="container mx-auto px-4 py-8">
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/verify-email/:token" element={<EmailConfirmation />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+              
+              {/* Protected routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/documents" element={
+                <ProtectedRoute>
+                  <Documents />
+                </ProtectedRoute>
+              } />
+              {/* Redirection pour les anciennes routes de documents */}
+              <Route path="/documents/new" element={<Navigate to="/upload-documents" />} />
+              <Route path="/documents/:id" element={<Navigate to="/documents" />} />
+              
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              
+              {/* VAE Process Routes */}
+              <Route path="/upload-documents" element={
+                <ProtectedRoute>
+                  <UploadDocuments />
+                </ProtectedRoute>
+              } />
+              <Route path="/question-flow" element={
+                <ProtectedRoute>
+                  <QuestionFlow />
+                </ProtectedRoute>
+              } />
+              <Route path="/final-dossier" element={
+                <ProtectedRoute>
+                  <FinalDossier />
+                </ProtectedRoute>
+              } />
+              <Route path="/vae-creation" element={
+                <ProtectedRoute>
+                  <VAECreation />
+                </ProtectedRoute>
+              } />
+              
+              {/* Admin routes */}
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } />
+              <Route path="/admin/vertex" element={
+                <AdminRoute>
+                  <VertexConfig />
+                </AdminRoute>
+              } />
+              <Route path="/admin/questions" element={
+                <AdminRoute>
+                  <AdminUploadQuestions />
+                </AdminRoute>
+              } />
+              <Route path="/admin/config" element={
+                <AdminRoute>
+                  <AdminConfig />
+                </AdminRoute>
+              } />
+              
+              {/* 404 route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
+        </div>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 
