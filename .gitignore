@@ -12,6 +12,11 @@ build/
 .next/
 out/
 
+# Deployment
+../deploy-ready/
+deploy-ready/
+*.deploy.log
+
 # Environment files
 .env
 .env.local
