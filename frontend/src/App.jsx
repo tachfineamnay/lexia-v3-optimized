@@ -24,7 +24,7 @@ import AdminDashboard from './pages/AdminDashboard';
 
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ToastProvider } from './hooks/useToast';
-import AppRoutes from './routes';
+
 import './styles/lexia-design-system.css';
 
 // Protected route component
