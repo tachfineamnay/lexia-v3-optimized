@@ -8,10 +8,10 @@ export default defineConfig({
   
   // Configuration pour le développement
   server: {
-    port: 3000,
+    port: 8083,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL || 'http://localhost:5000',
+        target: process.env.VITE_API_URL || 'http://localhost:8089',
         changeOrigin: true,
         secure: false
       },
