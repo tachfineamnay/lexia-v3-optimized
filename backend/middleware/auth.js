@@ -74,7 +74,4 @@ const adminMiddleware = (req, res, next) => {
 module.exports = {
   authMiddleware,
   adminMiddleware
-};
-
-// Log de débogage pour confirmer l'export
-console.log('Auth middleware exporté avec succès:', typeof module.exports.authMiddleware); 
+}; 
