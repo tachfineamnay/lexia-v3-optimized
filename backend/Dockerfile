@@ -14,7 +14,7 @@ RUN npm install
 # Copier le code source
 COPY . .
 
-# Stage de production
+# ---- Stage de production ----
 FROM node:18-alpine
 
 WORKDIR /usr/src/app
@@ -27,10 +27,10 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S -u 1001 -G nodejs nodejs
 
 # Créer les dossiers nécessaires avec les bonnes permissions
-RUN mkdir -p uploads exports && \
+RUN mkdir -p uploads exports logs && \
     chown -R nodejs:nodejs /usr/src/app
 
-# Copier depuis le builder
+# Copier depuis le builder (avec bons droits)
 COPY --from=builder --chown=nodejs:nodejs /usr/src/app/node_modules ./node_modules
 COPY --chown=nodejs:nodejs . .
 
@@ -41,3 +41,4 @@ EXPOSE 8089
 
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "server.js"]
+
