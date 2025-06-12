@@ -9,7 +9,7 @@ COPY package*.json ./
 RUN rm -rf node_modules package-lock.json
 
 # Installer les dépendances
-RUN npm install --production
+RUN npm install
 
 # Copier le code source
 COPY . .
