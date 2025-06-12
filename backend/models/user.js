@@ -218,8 +218,7 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index pour optimiser les recherches
-userSchema.index({ email: 1 });
+// Index email supprimé - déjà défini dans init-mongo.js
 userSchema.index({ 'professionalInfo.skills': 1 });
 userSchema.index({ isActive: 1, role: 1 });
 
