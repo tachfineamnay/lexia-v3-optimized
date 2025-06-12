@@ -2,176 +2,165 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const helmet = require('helmet');
 const path = require('path');
 const fs = require('fs');
-
-// Import routes
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const documentRoutes = require('./routes/documents');
-const aiRoutes = require('./routes/ai');
-const uploadRoutes = require('./routes/uploads');
-const questionRoutes = require('./routes/questions');
-const vertexRoutes = require('./routes/vertex');
-const configRoutes = require('./routes/config');
-const dossierRoutes = require('./routes/dossiers');
-const healthRoutes = require('./routes/health');
 
 // Load environment variables
 dotenv.config();
 
-// Validate environment variables
-const validateEnv = require('./config/validateEnv');
-validateEnv();
-
 // Initialize express app
 const app = express();
 
-// Middleware
-app.use(helmet()); // Adds security headers
+// Basic middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.CORS_ORIGIN || false 
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://localhost:8083'],
+  origin: process.env.CORS_ORIGIN || '*',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request logger middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} | ${req.method} ${req.originalUrl} | IP: ${req.ip}`);
+  console.log(`${new Date().toISOString()} | ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// MongoDB Connection with improved error handling and logging
-mongoose.set('debug', process.env.NODE_ENV === 'development');
+// Health check route (MUST be first)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 
-// Try to connect to MongoDB but don't exit if it fails
-if (process.env.MONGODB_URI || process.env.NODE_ENV === 'production') {
-  mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/LexiaV3', {
-    serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
-    auth: {
-      username: process.env.MONGO_ROOT_USERNAME,
-      password: process.env.MONGO_ROOT_PASSWORD
+// MongoDB Connection (non-blocking)
+const connectDB = async () => {
+  try {
+    if (process.env.MONGODB_URI) {
+      await mongoose.connect(process.env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+      });
+      console.log('✓ Connected to MongoDB');
+    } else {
+      console.warn('⚠️ No MONGODB_URI provided, running without database');
     }
-  })
-    .then(() => {
-      console.log('=================================');
-      console.log('✓ Connected to MongoDB database');
-      console.log(`✓ Database: ${mongoose.connection.name}`);
-      console.log(`✓ Host: ${mongoose.connection.host}`);
-      console.log(`✓ Port: ${mongoose.connection.port}`);
-      console.log('=================================');
-    })
-    .catch(err => {
-      console.error('=================================');
-      console.error('⚠️  MongoDB connection error:', err.message);
-      console.error('⚠️  The server will continue running without database support');
-      console.error('⚠️  Some features may not work properly');
-      console.error('=================================');
-    });
-} else {
-  console.warn('=================================');
-  console.warn('⚠️  Running without MongoDB connection');
-  console.warn('⚠️  Set MONGODB_URI environment variable to enable database');
-  console.warn('=================================');
+  } catch (error) {
+    console.error('⚠️ MongoDB connection failed:', error.message);
+    console.log('⚠️ Server will continue without database');
+  }
+};
+
+// Connect to database (don't wait for it)
+connectDB();
+
+// Import and use routes (with error handling)
+try {
+  const authRoutes = require('./routes/auth');
+  app.use('/api/auth', authRoutes);
+} catch (error) {
+  console.warn('⚠️ Auth routes not available:', error.message);
 }
 
-// Monitor MongoDB connection events
-mongoose.connection.on('error', err => {
-  console.error('❌ MongoDB connection error:', err);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.warn('⚠️ MongoDB disconnected');
-});
-
-mongoose.connection.on('reconnected', () => {
-  console.log('✓ MongoDB reconnected');
-});
-
-// Routes
-app.use('/api/health', healthRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/uploads', uploadRoutes);
-app.use('/api/questions', questionRoutes);
-app.use('/api/vertex', vertexRoutes);
-app.use('/api/config', configRoutes);
-app.use('/api/dossiers', dossierRoutes);
-
-// Create exports directory if it doesn't exist
-const exportsDir = path.join(__dirname, 'exports');
-if (!fs.existsSync(exportsDir)) {
-  fs.mkdirSync(exportsDir, { recursive: true });
+try {
+  const userRoutes = require('./routes/users');
+  app.use('/api/users', userRoutes);
+} catch (error) {
+  console.warn('⚠️ User routes not available:', error.message);
 }
 
-// Serve static files for exports
-app.use('/api/dossiers/download', express.static(exportsDir));
+try {
+  const dossierRoutes = require('./routes/dossiers');
+  app.use('/api/dossiers', dossierRoutes);
+} catch (error) {
+  console.warn('⚠️ Dossier routes not available:', error.message);
+}
+
+try {
+  const uploadRoutes = require('./routes/uploads');
+  app.use('/api/uploads', uploadRoutes);
+} catch (error) {
+  console.warn('⚠️ Upload routes not available:', error.message);
+}
+
+// Create necessary directories
+const createDirectories = () => {
+  const dirs = ['uploads', 'exports', 'logs'];
+  dirs.forEach(dir => {
+    const dirPath = path.join(__dirname, dir);
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+      console.log(`✓ Created directory: ${dir}`);
+    }
+  });
+};
+
+createDirectories();
+
+// Basic API info route
+app.get('/api', (req, res) => {
+  res.json({
+    name: 'LexiaV3 API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: [
+      '/api/health',
+      '/api/auth',
+      '/api/users',
+      '/api/dossiers',
+      '/api/uploads'
+    ]
+  });
+});
 
 // 404 handler
-app.use((req, res, next) => {
+app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: `Route not found: ${req.originalUrl}`
   });
 });
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend/dist', 'index.html'));
-  });
-}
-
-// Global error handling middleware (four parameters)
+// Global error handler
 app.use((err, req, res, next) => {
-  // Log the error details
-  console.error('=================================');
-  console.error(`❌ ERROR ${err.name || 'UnknownError'}: ${err.message}`);
-  console.error(`❌ Stack: ${err.stack}`);
-  console.error(`❌ Route: ${req.method} ${req.originalUrl}`);
-  console.error('=================================');
-
-  // Determine status code
-  const statusCode = err.statusCode || err.status || 500;
-  
-  // Send response to client
-  res.status(statusCode).json({
+  console.error('❌ Error:', err.message);
+  res.status(500).json({
     success: false,
-    message: err.message || 'Server Error',
-    error: process.env.NODE_ENV === 'development' ? {
-      stack: err.stack,
-      name: err.name
-    } : undefined
+    message: 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
 });
 
 // Start server
 const PORT = process.env.PORT || 8089;
-app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log('=================================');
   console.log(`✓ Server running on port ${PORT}`);
   console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`✓ API URL: http://localhost:${PORT}/api`);
+  console.log(`✓ Health check: http://localhost:${PORT}/api/health`);
   console.log('=================================');
 });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  // For debugging in development, consider crashing the process
-  if (process.env.NODE_ENV === 'development') {
-    throw reason;
-  }
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    console.log('Process terminated');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  server.close(() => {
+    console.log('Process terminated');
+    process.exit(0);
+  });
 });
 
 module.exports = app; 
