@@ -1,92 +1,74 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 
-// Load environment variables
-dotenv.config();
-
-// Initialize express app
 const app = express();
 
-// Basic middleware
+// Middleware de sécurité
+app.use(helmet());
+
+// Configuration CORS
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true
 }));
 
+// Parsing JSON
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Request logger middleware
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} | ${req.method} ${req.originalUrl}`);
-  next();
+// Rate limiting global
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limite chaque IP à 100 requêtes par fenêtre
+  message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.'
 });
+app.use('/api/', limiter);
 
-// Health check route (MUST be first)
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/vae', require('./routes/vae'));
+app.use('/api/documents', require('./routes/documents'));
+app.use('/api/ai', require('./routes/ai'));
+app.use('/api/dashboard', require('./routes/dashboard'));
+
+// Route de santé
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
+  res.json({ 
+    status: 'ok', 
     timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV,
+    version: '2.0.0'
   });
 });
 
-// MongoDB Connection (non-blocking)
-const connectDB = async () => {
-  try {
-    if (process.env.MONGODB_URI) {
-      await mongoose.connect(process.env.MONGODB_URI, {
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
-      });
-      console.log('✓ Connected to MongoDB');
-    } else {
-      console.warn('⚠️ No MONGODB_URI provided, running without database');
-    }
-  } catch (error) {
-    console.error('⚠️ MongoDB connection failed:', error.message);
-    console.log('⚠️ Server will continue without database');
-  }
-};
+// Gestion des erreurs 404
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route non trouvée' });
+});
 
-// Connect to database (don't wait for it)
-connectDB();
+// Middleware de gestion des erreurs
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    error: err.message || 'Erreur serveur interne',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
 
-// Import and use routes (with error handling)
-try {
-  const authRoutes = require('./routes/auth');
-  app.use('/api/auth', authRoutes);
-} catch (error) {
-  console.warn('⚠️ Auth routes not available:', error.message);
-}
-
-try {
-  const userRoutes = require('./routes/users');
-  app.use('/api/users', userRoutes);
-} catch (error) {
-  console.warn('⚠️ User routes not available:', error.message);
-}
-
-try {
-  const dossierRoutes = require('./routes/dossiers');
-  app.use('/api/dossiers', dossierRoutes);
-} catch (error) {
-  console.warn('⚠️ Dossier routes not available:', error.message);
-}
-
-try {
-  const uploadRoutes = require('./routes/uploads');
-  app.use('/api/uploads', uploadRoutes);
-} catch (error) {
-  console.warn('⚠️ Upload routes not available:', error.message);
-}
+// Connexion à MongoDB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lexiav4', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('✅ Connecté à MongoDB'))
+.catch(err => console.error('❌ Erreur connexion MongoDB:', err));
 
 // Create necessary directories
 const createDirectories = () => {
@@ -112,38 +94,19 @@ app.get('/api', (req, res) => {
       '/api/health',
       '/api/auth',
       '/api/users',
-      '/api/dossiers',
-      '/api/uploads'
+      '/api/vae',
+      '/api/documents',
+      '/api/ai',
+      '/api/dashboard'
     ]
   });
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Route not found: ${req.originalUrl}`
-  });
-});
-
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.message);
-  res.status(500).json({
-    success: false,
-    message: 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
-});
-
-// Start server
-const PORT = process.env.PORT || 8089;
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log('=================================');
-  console.log(`✓ Server running on port ${PORT}`);
-  console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`✓ Health check: http://localhost:${PORT}/api/health`);
-  console.log('=================================');
+// Démarrage du serveur
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Serveur LexiaV4 démarré sur le port ${PORT}`);
+  console.log(`📍 Environnement: ${process.env.NODE_ENV || 'development'}`);
 });
 
 // Graceful shutdown

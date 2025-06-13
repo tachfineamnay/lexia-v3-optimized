@@ -1,73 +1,66 @@
-version: '3.8'
+version: '3.9'
 
 services:
-  # MongoDB Database
-  mongodb:
-    image: mongo:7.0
-    container_name: mongodb-${COMPOSE_PROJECT_NAME:-lexiav3}
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: lexia-postgres
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password123}
-      MONGO_INITDB_DATABASE: LexiaV3
+      POSTGRES_DB: lexia_v4
+      POSTGRES_USER: ${DB_USER:-lexia}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-lexia_secure_password}
     volumes:
-      - mongodb_data:/data/db
-      - ./backend/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-    networks:
-      - lexiav3-network
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-lexia}"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-      start_period: 40s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: lexia-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Backend API
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: backend-${COMPOSE_PROJECT_NAME:-lexiav3}
+    container_name: lexia-backend
     restart: unless-stopped
     environment:
-      NODE_ENV: production
-      PORT: 8089
-      MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password123}@mongodb:27017/LexiaV3?authSource=admin
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here-must-be-at-least-32-characters-long}
-      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-your-refresh-token-secret-here-must-be-at-least-32-characters-long}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8083}
-      EMAIL_HOST: ${EMAIL_HOST:-smtp.gmail.com}
-      EMAIL_PORT: ${EMAIL_PORT:-587}
-      EMAIL_USER: ${EMAIL_USER:-}
-      EMAIL_PASS: ${EMAIL_PASS:-}
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 5000
+      DATABASE_URL: postgresql://${DB_USER:-lexia}:${DB_PASSWORD:-lexia_secure_password}@postgres:5432/lexia_v4
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key}
+      # AI API Keys
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./backend/uploads:/app/uploads
-      - ./backend/exports:/app/exports
-    ports:
-      - "8089:8089"
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    networks:
-      - lexiav3-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8089/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   # Frontend
   frontend:
@@ -75,39 +68,20 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://168.231.86.146:8089}
-    container_name: frontend-${COMPOSE_PROJECT_NAME:-lexiav3}
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
+    container_name: lexia-frontend
     restart: unless-stopped
     ports:
-      - "8083:8083"
+      - "3000:80"
     depends_on:
       - backend
-    networks:
-      - lexiav3-network
-    # Volume temporaire pour debug
-    volumes:
-      - ./debug-nginx:/debug:ro
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/health.txt"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    # Variables d'environnement pour debug
     environment:
-      - DEBUG=1
+      - NODE_ENV=production
 
 volumes:
-  mongodb_data:
-    driver: local
+  postgres_data:
+  redis_data:
 
 networks:
-  lexiav3-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+  default:
+    name: lexia-network

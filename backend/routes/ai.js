@@ -11,12 +11,25 @@ const docx = require('docx');
 const { PDFDocument } = require('pdf-lib');
 const QuestionSet = require('../models/questionSet');
 const Dossier = require('../models/dossier');
+const { OpenAI } = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Anthropic = require('@anthropic-ai/sdk');
 
 // Initialize Vertex AI
 const projectId = process.env.GOOGLE_CLOUD_PROJECT;
 const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 const vertexAI = new VertexAI({ project: projectId, location });
 const model = 'gemini-1.5-pro';
+
+// Configuration des clients IA
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY
+});
 
 // Extract text from file based on file type
 async function extractTextFromFile(filePath, fileType) {
@@ -584,6 +597,212 @@ router.get('/download/:dossierId', authMiddleware, async (req, res) => {
       message: 'Erreur lors du téléchargement du dossier',
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
+  }
+});
+
+// Fonction pour appeler GPT-4
+async function callGPT4(message, context) {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        {
+          role: "system",
+          content: `Tu es un assistant expert en VAE (Validation des Acquis de l'Expérience). 
+                   Tu aides les candidats à structurer leur dossier, rédiger leurs expériences 
+                   et comprendre le processus. Contexte: ${context}`
+        },
+        { role: "user", content: message }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000
+    });
+    
+    return completion.choices[0].message.content;
+  } catch (error) {
+    console.error('Erreur GPT-4:', error);
+    throw error;
+  }
+}
+
+// Fonction pour appeler Claude
+async function callClaude(message, context) {
+  try {
+    const response = await anthropic.messages.create({
+      model: "claude-3-opus-20240229",
+      max_tokens: 1000,
+      temperature: 0.7,
+      system: `Tu es un assistant expert en VAE (Validation des Acquis de l'Expérience). 
+               Tu aides les candidats à structurer leur dossier, rédiger leurs expériences 
+               et comprendre le processus. Contexte: ${context}`,
+      messages: [
+        { role: "user", content: message }
+      ]
+    });
+    
+    return response.content[0].text;
+  } catch (error) {
+    console.error('Erreur Claude:', error);
+    throw error;
+  }
+}
+
+// Fonction pour appeler Gemini
+async function callGemini(message, context) {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    
+    const prompt = `En tant qu'assistant expert en VAE (Validation des Acquis de l'Expérience), 
+                   aide le candidat avec sa question. Contexte: ${context}
+                   
+                   Question: ${message}`;
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+  } catch (error) {
+    console.error('Erreur Gemini:', error);
+    throw error;
+  }
+}
+
+// Fonction pour combiner les réponses des 3 IA
+async function callMultiAI(message, context) {
+  try {
+    // Appeler les 3 IA en parallèle
+    const [gptResponse, claudeResponse, geminiResponse] = await Promise.all([
+      callGPT4(message, context).catch(err => ({ error: err.message })),
+      callClaude(message, context).catch(err => ({ error: err.message })),
+      callGemini(message, context).catch(err => ({ error: err.message }))
+    ]);
+
+    // Synthétiser les réponses
+    const synthesisPrompt = `
+      J'ai reçu 3 réponses d'IA différentes à la question suivante sur la VAE:
+      "${message}"
+      
+      Réponse GPT-4: ${gptResponse.error || gptResponse}
+      Réponse Claude: ${claudeResponse.error || claudeResponse}
+      Réponse Gemini: ${geminiResponse.error || geminiResponse}
+      
+      Synthétise ces réponses en une seule réponse cohérente et complète, 
+      en gardant les meilleurs éléments de chaque réponse.
+    `;
+
+    // Utiliser GPT-4 pour la synthèse finale
+    const synthesis = await callGPT4(synthesisPrompt, "synthesis");
+    
+    return synthesis;
+  } catch (error) {
+    console.error('Erreur Multi-IA:', error);
+    // Fallback sur GPT-4 seul
+    return await callGPT4(message, context);
+  }
+}
+
+// Route principale du chat
+router.post('/chat', authMiddleware, async (req, res) => {
+  try {
+    const { message, model = 'multi', context = 'general' } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ error: 'Message requis' });
+    }
+
+    let response;
+    
+    switch (model) {
+      case 'gpt4':
+        response = await callGPT4(message, context);
+        break;
+      case 'claude':
+        response = await callClaude(message, context);
+        break;
+      case 'gemini':
+        response = await callGemini(message, context);
+        break;
+      case 'multi':
+      default:
+        response = await callMultiAI(message, context);
+        break;
+    }
+
+    // Sauvegarder la conversation dans la base de données
+    const Conversation = require('../models/Conversation');
+    await Conversation.create({
+      user: req.user.id,
+      messages: [
+        { role: 'user', content: message },
+        { role: 'assistant', content: response, model }
+      ]
+    });
+
+    res.json({ response, model });
+  } catch (error) {
+    console.error('Erreur chat IA:', error);
+    res.status(500).json({ 
+      error: 'Erreur lors de la génération de la réponse',
+      details: error.message 
+    });
+  }
+});
+
+// Route pour obtenir des suggestions contextuelles
+router.get('/suggestions', authMiddleware, async (req, res) => {
+  try {
+    const { context = 'general' } = req.query;
+    
+    const suggestions = {
+      general: [
+        "Comment structurer mon dossier VAE ?",
+        "Quelles sont les étapes de la VAE ?",
+        "Comment décrire mes expériences professionnelles ?",
+        "Quels documents dois-je fournir ?"
+      ],
+      structure: [
+        "Quel plan suivre pour mon livret 2 ?",
+        "Comment organiser mes activités professionnelles ?",
+        "Quelle méthodologie adopter pour la rédaction ?"
+      ],
+      redaction: [
+        "Comment valoriser mes compétences ?",
+        "Quels verbes d'action utiliser ?",
+        "Comment démontrer mes acquis ?"
+      ]
+    };
+
+    res.json(suggestions[context] || suggestions.general);
+  } catch (error) {
+    console.error('Erreur suggestions:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des suggestions' });
+  }
+});
+
+// Route pour analyser un document VAE
+router.post('/analyze-document', authMiddleware, async (req, res) => {
+  try {
+    const { content, documentType = 'experience' } = req.body;
+    
+    if (!content) {
+      return res.status(400).json({ error: 'Contenu requis' });
+    }
+
+    const analysisPrompt = `
+      Analyse ce contenu de VAE (type: ${documentType}) et fournis:
+      1. Points forts
+      2. Points à améliorer
+      3. Suggestions concrètes
+      4. Score de qualité sur 10
+      
+      Contenu: ${content}
+    `;
+
+    const analysis = await callMultiAI(analysisPrompt, 'document_analysis');
+    
+    res.json({ analysis });
+  } catch (error) {
+    console.error('Erreur analyse document:', error);
+    res.status(500).json({ error: 'Erreur lors de l\'analyse du document' });
   }
 });
 
