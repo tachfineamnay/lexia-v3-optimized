@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// API Configuration - CORRECTION POUR PRODUCTION
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.PROD ? 'http://168.231.86.146:8089' : 'http://localhost:8089');
+// Configuration API centralisée
+const API_URL = import.meta.env.VITE_API_URL || 'http://168.231.86.146:8089';
+
+// Enlever le slash final s'il existe
+const API_BASE_URL = API_URL.replace(/\/$/, '');
 
 console.log('🔗 API Base URL:', API_BASE_URL); // Debug log
 
@@ -78,4 +80,45 @@ export const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-export default api; 
+export const API_CONFIG = {
+  baseURL: API_BASE_URL,
+  endpoints: {
+    // Auth endpoints
+    login: '/api/auth/login',
+    register: '/api/auth/register',
+    logout: '/api/auth/logout',
+    refreshToken: '/api/auth/refresh-token',
+    forgotPassword: '/api/auth/forgot-password',
+    resetPassword: '/api/auth/reset-password',
+    verifyEmail: '/api/auth/verify-email',
+    
+    // User endpoints
+    profile: '/api/users/profile',
+    updateProfile: '/api/users/profile',
+    
+    // VAE endpoints
+    vaeList: '/api/vae',
+    vaeCreate: '/api/vae',
+    vaeDetail: (id) => `/api/vae/${id}`,
+    vaeUpdate: (id) => `/api/vae/${id}`,
+    vaeDelete: (id) => `/api/vae/${id}`,
+    
+    // Document endpoints
+    uploadDocument: '/api/documents/upload',
+    documentList: '/api/documents',
+    documentDelete: (id) => `/api/documents/${id}`,
+    
+    // Health check
+    health: '/api/health'
+  }
+};
+
+// Helper pour construire les URLs complètes
+export const buildApiUrl = (endpoint) => {
+  if (typeof endpoint === 'function') {
+    return (...args) => `${API_BASE_URL}${endpoint(...args)}`;
+  }
+  return `${API_BASE_URL}${endpoint}`;
+};
+
+export default API_CONFIG; 
