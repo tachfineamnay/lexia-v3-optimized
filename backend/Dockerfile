@@ -2,25 +2,29 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Installer curl pour les health checks
+# Install curl for health checks
 RUN apk add --no-cache curl
 
-# Copier les fichiers de dépendances
+# Copy package files
 COPY package*.json ./
 
-# Installer les dépendances
-RUN npm install --production
+# Install production dependencies
+RUN npm ci --only=production
 
-# Copier le code source
+# Copy source code
 COPY . .
 
-# Créer les dossiers nécessaires avec les bonnes permissions
+# Create necessary directories
 RUN mkdir -p uploads exports logs && \
-    chmod 755 uploads exports logs
+    chmod -R 755 uploads exports logs
 
-# Exposer le port
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:8089/api/health || exit 1
+
+# Expose port
 EXPOSE 8089
 
-# Commande de démarrage avec logs de debug
-CMD ["sh", "-c", "echo 'Starting LexiaV3 Backend...' && ls -la && npm start"]
+# Start the server
+CMD ["node", "server-simple.js"]
 

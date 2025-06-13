@@ -4,8 +4,8 @@ services:
   # MongoDB Database
   mongodb:
     image: mongo:7.0
-    container_name: LexiaV3-mongodb
-    restart: always
+    container_name: mongodb-${COMPOSE_PROJECT_NAME:-lexiav3}
+    restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password123}
@@ -32,8 +32,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: LexiaV3-backend
-    restart: always
+    container_name: backend-${COMPOSE_PROJECT_NAME:-lexiav3}
+    restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 8089
@@ -76,24 +76,22 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: ${VITE_API_URL:-http://168.231.86.146:8089}
-      no_cache: true  # Force rebuild sans cache
-    container_name: LexiaV3-frontend
-    restart: always
+    container_name: frontend-${COMPOSE_PROJECT_NAME:-lexiav3}
+    restart: unless-stopped
     ports:
       - "8083:8083"
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     networks:
       - lexiav3-network
     # Volume temporaire pour debug
     volumes:
       - ./debug-nginx:/debug:ro
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8083"]
+      test: ["CMD", "curl", "-f", "http://localhost:8083/health.txt"]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 3
     logging:
       driver: "json-file"
       options:
