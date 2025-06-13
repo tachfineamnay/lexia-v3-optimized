@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configuration API centralisée
-const API_URL = import.meta.env.VITE_API_URL || 'http://168.231.86.146:8089';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // Enlever le slash final s'il existe
 const API_BASE_URL = API_URL.replace(/\/$/, '');
@@ -63,6 +63,8 @@ export const API_ENDPOINTS = {
   // AI endpoints
   AI_GENERATE_VAE: '/ai/generate-vae',
   AI_ANALYZE: '/ai/analyze',
+  AI_CHAT: '/ai/chat',
+  AI_SUGGESTIONS: '/ai/suggestions',
   
   // Upload endpoints
   UPLOAD: '/uploads',
@@ -72,6 +74,11 @@ export const API_ENDPOINTS = {
   
   // Config endpoints
   CONFIG: '/config',
+  
+  // Dashboard endpoints
+  DASHBOARD_STATS: '/dashboard/stats',
+  DASHBOARD_ACTIVITY: '/dashboard/activity',
+  DASHBOARD_INSIGHTS: '/dashboard/insights',
 };
 
 // Helper function to get auth headers
@@ -108,6 +115,16 @@ export const API_CONFIG = {
     documentList: '/api/documents',
     documentDelete: (id) => `/api/documents/${id}`,
     
+    // AI endpoints
+    aiChat: '/api/ai/chat',
+    aiSuggestions: '/api/ai/suggestions',
+    aiAnalyze: '/api/ai/analyze-document',
+    
+    // Dashboard endpoints
+    dashboardStats: '/api/dashboard/stats',
+    dashboardActivity: '/api/dashboard/activity',
+    dashboardInsights: '/api/dashboard/insights',
+    
     // Health check
     health: '/api/health'
   }
@@ -120,5 +137,8 @@ export const buildApiUrl = (endpoint) => {
   }
   return `${API_BASE_URL}${endpoint}`;
 };
+
+// Export axios instance for direct use
+export { api };
 
 export default API_CONFIG; 
