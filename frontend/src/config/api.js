@@ -1,7 +1,10 @@
 import axios from 'axios';
 
-// API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8089';
+// API Configuration - CORRECTION POUR PRODUCTION
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.PROD ? 'http://168.231.86.146:8089' : 'http://localhost:8089');
+
+console.log('🔗 API Base URL:', API_BASE_URL); // Debug log
 
 // Create axios instance
 const api = axios.create({

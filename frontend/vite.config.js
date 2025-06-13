@@ -9,6 +9,7 @@ export default defineConfig({
   // Configuration pour le développement
   server: {
     port: 8083,
+    host: '0.0.0.0', // Important pour Docker
     proxy: {
       '/api': {
         target: process.env.VITE_API_URL || 'http://localhost:8089',
@@ -71,9 +72,11 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
   },
   
-  // Variables d'environnement
+  // Variables d'environnement - CORRECTION CRITIQUE
   define: {
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0')
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
+    // Injecter l'URL de l'API dans le build
+    'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || 'http://168.231.86.146:8089')
   },
   
   // Optimisation des dépendances

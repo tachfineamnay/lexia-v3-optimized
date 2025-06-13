@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import api from '../config/api'; // Utiliser la config centralisée
 
 const AuthContext = createContext();
 
@@ -12,49 +12,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Set up axios defaults
-  axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  
-  // Add auth token to requests
-  axios.interceptors.request.use(
-    (config) => {
-      if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => Promise.reject(error)
-  );
-
-  // Intercept 401 responses and try to refresh token
-  axios.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-      const originalRequest = error.config;
-      
-      if (error.response.status === 401 && !originalRequest._retry && refreshToken) {
-        originalRequest._retry = true;
-        
-        try {
-          const res = await axios.post('/api/auth/refresh-token', { refreshToken });
-          const newToken = res.data.token;
-          
-          setToken(newToken);
-          localStorage.setItem('token', newToken);
-          
-          originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
-          return axios(originalRequest);
-        } catch (refreshError) {
-          // If refresh token is invalid, logout user
-          logout();
-          return Promise.reject(refreshError);
-        }
-      }
-      
-      return Promise.reject(error);
-    }
-  );
-
   // Load user on mount or token change
   useEffect(() => {
     const loadUser = async () => {
@@ -64,7 +21,7 @@ export const AuthProvider = ({ children }) => {
       }
       
       try {
-        const res = await axios.get('/api/auth/me');
+        const res = await api.get('/auth/me');
         setUser(res.data);
         setError(null);
       } catch (err) {
@@ -88,7 +45,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       setLoading(true);
-      const res = await axios.post('/api/auth/register', userData);
+      const res = await api.post('/auth/register', userData);
       
       const { token: newToken, refreshToken: newRefreshToken, user: newUser } = res.data;
       
@@ -113,7 +70,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       setLoading(true);
-      const res = await axios.post('/api/auth/login', credentials);
+      const res = await api.post('/auth/login', credentials);
       
       const { token: newToken, refreshToken: newRefreshToken, user: newUser } = res.data;
       
@@ -147,7 +104,7 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = async (userData) => {
     try {
       setLoading(true);
-      const res = await axios.put('/api/users/profile', userData);
+      const res = await api.put('/users/profile', userData);
       setUser(res.data);
       setError(null);
       return res.data;
@@ -163,7 +120,7 @@ export const AuthProvider = ({ children }) => {
   const changePassword = async (passwordData) => {
     try {
       setLoading(true);
-      const res = await axios.put('/api/users/change-password', passwordData);
+      const res = await api.put('/users/change-password', passwordData);
       setError(null);
       return res.data;
     } catch (err) {
