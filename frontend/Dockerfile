@@ -6,51 +6,48 @@ WORKDIR /app
 # Copier les fichiers de dépendances
 COPY package*.json ./
 
-# Nettoyer et installer les dépendances
-RUN rm -rf node_modules package-lock.json && \
-    npm install
+# Installer les dépendances
+RUN npm ci --only=production
 
-# Copier le code source
+# Copier TOUT le code source
 COPY . .
 
-# Build de l'application avec variables d'environnement
+# Variables d'environnement pour le build
 ARG VITE_API_URL=http://168.231.86.146:8089
 ENV VITE_API_URL=$VITE_API_URL
 
-# Debug: Afficher l'URL de l'API
-RUN echo "Building with API URL: $VITE_API_URL"
-
 # Build l'application
-RUN npm run build
-
-# Vérifier que le build existe et afficher le contenu
-RUN echo "=== Contenu du dossier dist ===" && \
+RUN echo "🔨 Building with API URL: $VITE_API_URL" && \
+    npm run build && \
+    echo "📁 Build completed, checking dist folder:" && \
     ls -la dist/ && \
-    echo "=== Taille index.html ===" && \
+    echo "📄 Index.html size:" && \
     ls -lh dist/index.html && \
-    echo "=== Contenu index.html (premières lignes) ===" && \
-    head -5 dist/index.html
+    echo "✅ Build verification complete"
 
 # Stage 2: Production
 FROM nginx:alpine
 
-# Installer curl pour les health checks
-RUN apk add --no-cache curl
+# Supprimer TOUT le contenu par défaut de nginx
+RUN rm -rf /usr/share/nginx/html/* && \
+    rm -rf /etc/nginx/conf.d/default.conf
 
-# Supprimer la config par défaut de nginx
-RUN rm -rf /usr/share/nginx/html/*
-
-# Copier la configuration nginx personnalisée
+# Copier notre config nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copier les fichiers buildés depuis le stage builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copier les fichiers buildés - FORCE LA COPIE
+COPY --from=builder /app/dist/* /usr/share/nginx/html/
+COPY --from=builder /app/dist/assets /usr/share/nginx/html/assets
 
-# Vérifier que les fichiers sont bien copiés
-RUN echo "=== Vérification finale ===" && \
+# Vérification finale CRITIQUE
+RUN echo "🔍 VERIFICATION FINALE:" && \
+    echo "📁 Contenu de /usr/share/nginx/html:" && \
     ls -la /usr/share/nginx/html/ && \
-    echo "=== Taille finale index.html ===" && \
-    ls -lh /usr/share/nginx/html/index.html
+    echo "📄 Taille index.html:" && \
+    ls -lh /usr/share/nginx/html/index.html && \
+    echo "📄 Premières lignes index.html:" && \
+    head -5 /usr/share/nginx/html/index.html && \
+    echo "✅ Si vous voyez 'Welcome to nginx', le build a ÉCHOUÉ !"
 
 # Exposer le port 8083
 EXPOSE 8083
