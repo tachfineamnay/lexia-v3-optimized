@@ -1,25 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/auth');
+const auth = require('../middleware/auth');
 
 // Routes VAE
-router.get('/list', authMiddleware, (req, res) => {
+router.get('/list', auth.authMiddleware, (req, res) => {
   res.json({ message: 'Liste des VAE' });
 });
 
-router.get('/:id', authMiddleware, (req, res) => {
+router.get('/:id', auth.authMiddleware, (req, res) => {
   res.json({ message: `Détails de la VAE ${req.params.id}` });
 });
 
-router.post('/', authMiddleware, (req, res) => {
+router.post('/', auth.authMiddleware, (req, res) => {
   res.json({ message: 'VAE créée avec succès' });
 });
 
-router.put('/:id', authMiddleware, (req, res) => {
+router.put('/:id', auth.authMiddleware, (req, res) => {
   res.json({ message: `VAE ${req.params.id} mise à jour` });
 });
 
-router.delete('/:id', authMiddleware, (req, res) => {
+router.delete('/:id', auth.authMiddleware, (req, res) => {
   res.json({ message: `VAE ${req.params.id} supprimée` });
 });
 
