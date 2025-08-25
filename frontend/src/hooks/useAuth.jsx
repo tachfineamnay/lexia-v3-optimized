@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, useEffect } from 'react';
-import api from '../config/api'; // Utiliser la config centralisée
+import { api } from '../config/api'; // Utiliser la config centralisée
 
 const AuthContext = createContext();
 
