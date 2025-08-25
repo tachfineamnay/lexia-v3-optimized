@@ -23,15 +23,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: 📥 Install backend dependencies
         working-directory: ./backend
-        run: npm install
+        run: |
+          rm -f package-lock.json
+          npm install
 
       - name: 📥 Install frontend dependencies
         working-directory: ./frontend
-        run: npm install
+        run: |
+          rm -f package-lock.json
+          npm install
 
       - name: 🧪 Run backend tests
         working-directory: ./backend
