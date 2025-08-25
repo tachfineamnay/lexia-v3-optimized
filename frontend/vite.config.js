@@ -72,11 +72,9 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
   },
   
-  // Variables d'environnement - CORRECTION CRITIQUE
+  // Variables d'environnement
   define: {
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
-    // Injecter l'URL de l'API dans le build
-    'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || 'http://168.231.86.146:8089')
+    __APP_VERSION__: JSON.stringify('1.0.0')
   },
   
   // Optimisation des dépendances
