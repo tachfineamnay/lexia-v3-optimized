@@ -14,7 +14,7 @@ import {
   ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
-import api from '../services/api';
+import { api } from '../config/api';
 
 const Dashboard = () => {
   const { user } = useAuth();

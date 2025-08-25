@@ -5,7 +5,7 @@ import {
   FiActivity, FiLock, FiMail, FiAlertCircle,
   FiCheckCircle, FiXCircle, FiClock, FiTrendingUp
 } from 'react-icons/fi';
-import api from '../config/api';
+import { api } from '../config/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const AdminDashboard = () => {

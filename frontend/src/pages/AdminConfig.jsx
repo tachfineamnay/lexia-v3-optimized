@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiKey, FiDatabase, FiServer, FiMail, FiHardDrive, FiCpu, FiLock, FiRefreshCw, FiCheck, FiX, FiEye, FiEyeOff } from 'react-icons/fi';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Toast from '../components/Toast';
-import api from '../config/api';
+import { api } from '../config/api';
 
 const CONFIG_CATEGORIES = [
   { id: 'server', name: 'Serveur', icon: FiServer, color: 'blue' },
