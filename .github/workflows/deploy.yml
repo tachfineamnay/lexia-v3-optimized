@@ -87,7 +87,7 @@ jobs:
           build-args: |
             VITE_API_URL=http://localhost:5000
 
-  # Deploy job (only on main branch)
+  # Deploy job (only on main branch) - RÉACTIVÉ POUR COOLIFY
   deploy:
     name: 🚀 Deploy to Coolify
     runs-on: ubuntu-latest
