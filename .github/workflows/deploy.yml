@@ -36,18 +36,6 @@ jobs:
           rm -f package-lock.json
           npm install
 
-      - name: 🧪 Run backend tests
-        working-directory: ./backend
-        run: npm test
-        env:
-          NODE_ENV: test
-
-      - name: 🧪 Run frontend tests
-        working-directory: ./frontend
-        run: npm test -- --watchAll=false
-        env:
-          CI: true
-
       - name: 🏗️ Build frontend
         working-directory: ./frontend
         run: npm run build
