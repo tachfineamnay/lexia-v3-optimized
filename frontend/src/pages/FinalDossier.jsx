@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import vertexAiService from '../api/vertexAiService';
+import aiService from '../api/aiService';
 import VaeResponseBlock from '../components/VaeResponseBlock';
 import DossierEditor from '../components/DossierEditor';
 
@@ -157,7 +157,7 @@ function FinalDossier() {
       const userResponses = dossier.userResponses || {};
       
       // Call the AI service to regenerate the section
-      const result = await vertexAiService.generateVaeSection({
+      const result = await aiService.generateVaeSection({
         sectionName: sectionToRegenerate.title,
         userResponses,
         documents: dossier.documents || []

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import vertexAiService from '../api/vertexAiService';
+import aiService from '../api/aiService';
 import { useToast } from '../hooks/useToast';
 
 function PopupQuestion({ 
@@ -57,7 +57,7 @@ function PopupQuestion({
       
       try {
         // Call the AI service to generate a response suggestion
-        const result = await vertexAiService.generateResponseSuggestion({
+        const result = await aiService.generateResponseSuggestion({
           questionId: question.questionId,
           section,
           userInput: answer,

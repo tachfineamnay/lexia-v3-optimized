@@ -1,7 +1,7 @@
 /**
- * Service for interacting with the Vertex AI API via the backend
+ * Service for interacting with the AI API via the backend
  */
-const vertexAiService = {
+const aiService = {
   /**
    * Generate a suggestion for a specific question response
    * @param {Object} params Parameters for suggestion generation
@@ -110,4 +110,4 @@ const vertexAiService = {
   }
 };
 
-export default vertexAiService; 
+export default aiService; 

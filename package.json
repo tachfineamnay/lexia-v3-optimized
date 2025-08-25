@@ -13,7 +13,15 @@
     "dev:backend": "cd backend && npm run dev",
     "install:frontend": "cd frontend && npm install",
     "install:backend": "cd backend && npm install",
-    "deploy": "bash deploy-lexiav3.sh"
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test -- --watchAll=false",
+    "deploy": "bash deploy-lexiav3.sh",
+    "deploy:coolify": "bash deploy-coolify.sh",
+    "test:deployment": "bash test-deployment.sh",
+    "health:check": "curl -f http://localhost:5000/api/health || exit 1",
+    "build:production": "NODE_ENV=production docker-compose build",
+    "validate:env": "node backend/config/validateEnv.js"
   },
   "keywords": [
     "dyscalculia",

@@ -2,7 +2,6 @@ const express = require('express');
 const { authMiddleware } = require('../middleware/auth');
 const router = express.Router();
 const Document = require('../models/document');
-const { VertexAI } = require('@google-cloud/vertexai');
 const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
@@ -14,12 +13,6 @@ const Dossier = require('../models/dossier');
 const { OpenAI } = require('openai');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Anthropic = require('@anthropic-ai/sdk');
-
-// Initialize Vertex AI
-const projectId = process.env.GOOGLE_CLOUD_PROJECT;
-const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-const vertexAI = new VertexAI({ project: projectId, location });
-const model = 'gemini-1.5-pro';
 
 // Configuration des clients IA
 const openai = new OpenAI({
@@ -126,15 +119,20 @@ Fournis une réponse complète, structurée et détaillée qui correspond parfai
 `;
     }
 
-    // Générer le contenu avec Vertex AI
-    const generativeModel = vertexAI.preview.getGenerativeModel({ model });
-    
-    const result = await generativeModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: promptContent }] }],
+    // Générer le contenu avec OpenAI
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'user',
+          content: promptContent
+        }
+      ],
+      max_tokens: 2000,
+      temperature: 0.7
     });
     
-    const response = result.response;
-    const suggestionText = response.text();
+    const suggestionText = completion.choices[0].message.content;
     
     // Renvoyer la suggestion générée
     res.json({
@@ -144,8 +142,8 @@ Fournis une réponse complète, structurée et détaillée qui correspond parfai
         questionId,
         timestamp: new Date(),
         metadata: {
-          model,
-          source: 'vertex-ai'
+          model: 'gpt-4',
+          source: 'openai'
         }
       }
     });
@@ -221,15 +219,20 @@ En utilisant ces informations, rédige une section complète, cohérente et bien
 Le texte doit être directement utilisable dans un dossier VAE officiel.
 `;
 
-    // Générer le contenu avec Vertex AI
-    const generativeModel = vertexAI.preview.getGenerativeModel({ model });
-    
-    const result = await generativeModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: promptContent }] }],
+    // Générer le contenu avec OpenAI
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'user',
+          content: promptContent
+        }
+      ],
+      max_tokens: 3000,
+      temperature: 0.7
     });
     
-    const response = result.response;
-    const generatedContent = response.text();
+    const generatedContent = completion.choices[0].message.content;
     
     // Renvoyer le contenu généré
     res.json({
@@ -238,8 +241,8 @@ Le texte doit être directement utilisable dans un dossier VAE officiel.
       metadata: {
         section: sectionName,
         timestamp: new Date(),
-        model,
-        source: 'vertex-ai'
+        model: 'gpt-4',
+        source: 'openai'
       }
     });
   } catch (err) {
@@ -337,20 +340,26 @@ Réponds avec un format JSON contenant les sections générées:
 }
 `;
 
-    // Générer le contenu avec Vertex AI
-    const generativeModel = vertexAI.preview.getGenerativeModel({ model });
-    
-    const result = await generativeModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: promptContent }] }],
+    // Générer le contenu avec OpenAI
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'user',
+          content: promptContent
+        }
+      ],
+      max_tokens: 4000,
+      temperature: 0.7
     });
     
-    const response = result.response;
     let dossierContent;
     
     // Essayer de parser le JSON de la réponse
     try {
       // Extraire JSON de la réponse
-      const jsonMatch = response.text().match(/\{[\s\S]*\}/);
+      const responseText = completion.choices[0].message.content;
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         dossierContent = JSON.parse(jsonMatch[0]);
       } else {
@@ -363,7 +372,7 @@ Réponds avec un format JSON contenant les sections générées:
         sections: [
           {
             title: "Dossier VAE complet",
-            content: response.text()
+            content: completion.choices[0].message.content
           }
         ]
       };
@@ -375,8 +384,8 @@ Réponds avec un format JSON contenant les sections générées:
       ...dossierContent,
       metadata: {
         timestamp: new Date(),
-        model,
-        source: 'vertex-ai'
+        model: 'gpt-4',
+        source: 'openai'
       }
     });
   } catch (err) {
@@ -414,9 +423,6 @@ router.post('/process/:documentId', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'No content to process' });
     }
     
-    // Generate text with Vertex AI
-    const generativeModel = vertexAI.preview.getGenerativeModel({ model });
-    
     // Process document with AI
     const prompt = `
       Please analyze the following text and provide:
@@ -436,20 +442,28 @@ router.post('/process/:documentId', authMiddleware, async (req, res) => {
       }
       
       TEXT TO ANALYZE:
-      ${textContent.substring(0, 10000)} // Limit text to 10,000 chars
+      ${textContent.substring(0, 10000)}
     `;
 
-    const result = await generativeModel.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    // Generate text with OpenAI
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 2000,
+      temperature: 0.5
     });
-    
-    const response = result.response;
     
     // Parse AI response
     let aiAnalysis;
     try {
       // Extract JSON from response
-      const jsonMatch = response.text().match(/\{[\s\S]*\}/);
+      const responseText = completion.choices[0].message.content;
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         aiAnalysis = JSON.parse(jsonMatch[0]);
       } else {

@@ -172,7 +172,7 @@ const AdminConfig = () => {
                 <FiRefreshCw />
               </button>
             ) : null}
-            {(key === 'MONGODB_URI' || key === 'EMAIL_HOST' || key === 'VERTEX_AI_LOCATION') && (
+            {(key === 'MONGODB_URI' || key === 'EMAIL_HOST') && (
               <button
                 onClick={() => handleTest(key, value)}
                 disabled={testing[key] || !value}

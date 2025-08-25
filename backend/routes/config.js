@@ -24,9 +24,7 @@ const CONFIG_TEMPLATES = {
     GOOGLE_API_KEY: { description: 'Google API key', encrypted: true }
   },
   ai: {
-    GOOGLE_PROJECT_ID: { description: 'Google Cloud Project ID', encrypted: false },
-    GOOGLE_CREDENTIALS_PATH: { description: 'Path to Google credentials JSON', encrypted: false },
-    VERTEX_AI_LOCATION: { description: 'Vertex AI location', encrypted: false }
+    GOOGLE_API_KEY: { description: 'Google API key', encrypted: true }
   },
   email: {
     EMAIL_HOST: { description: 'SMTP host', encrypted: false },
@@ -185,13 +183,6 @@ router.post('/test/:category', authMiddleware, adminMiddleware, async (req, res)
         if (key === 'EMAIL_HOST') {
           // Test email configuration
           testResult = { success: true, message: 'Email configuration valid' };
-        }
-        break;
-        
-      case 'ai':
-        if (key === 'VERTEX_AI_LOCATION') {
-          // Test Vertex AI configuration
-          testResult = { success: true, message: 'Vertex AI configuration valid' };
         }
         break;
         

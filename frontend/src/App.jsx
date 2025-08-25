@@ -16,7 +16,6 @@ import UploadDocuments from './pages/UploadDocuments';
 import QuestionFlow from './pages/QuestionFlow';
 import FinalDossier from './pages/FinalDossier';
 import AdminUploadQuestions from './pages/AdminUploadQuestions';
-import VertexConfig from './pages/VertexConfig';
 import NotFound from './pages/NotFound';
 import VAECreation from './pages/VAECreation';
 import AdminConfig from './pages/AdminConfig';
@@ -78,7 +77,7 @@ function App() {
           <main className="container mx-auto px-4 py-8">
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/verify-email/:token" element={<EmailConfirmation />} />
@@ -132,11 +131,6 @@ function App() {
               <Route path="/admin" element={
                 <AdminRoute>
                   <AdminDashboard />
-                </AdminRoute>
-              } />
-              <Route path="/admin/vertex" element={
-                <AdminRoute>
-                  <VertexConfig />
                 </AdminRoute>
               } />
               <Route path="/admin/questions" element={

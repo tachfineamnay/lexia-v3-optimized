@@ -1,0 +1,111 @@
+{
+  "name": "lexia-v3",
+  "description": "LexiaV3 - Plateforme d'Assistant VAE alimentée par IA",
+  "type": "docker-compose",
+  "docker_compose_location": "./docker-compose.yml",
+  "build_pack": "docker",
+  "domains": [
+    {
+      "name": "frontend",
+      "port": 3000,
+      "type": "http"
+    },
+    {
+      "name": "backend", 
+      "port": 5000,
+      "type": "http"
+    }
+  ],
+  "environment_variables": [
+    {
+      "key": "NODE_ENV",
+      "value": "production",
+      "is_secret": false
+    },
+    {
+      "key": "DB_USER", 
+      "value": "lexia_admin",
+      "is_secret": false
+    },
+    {
+      "key": "DB_PASSWORD",
+      "value": "",
+      "is_secret": true,
+      "required": true
+    },
+    {
+      "key": "JWT_SECRET",
+      "value": "",
+      "is_secret": true,
+      "required": true
+    },
+    {
+      "key": "REFRESH_TOKEN_SECRET",
+      "value": "",
+      "is_secret": true,
+      "required": true
+    },
+    {
+      "key": "OPENAI_API_KEY",
+      "value": "",
+      "is_secret": true,
+      "required": true
+    },
+    {
+      "key": "ANTHROPIC_API_KEY",
+      "value": "",
+      "is_secret": true,
+      "required": false
+    },
+    {
+      "key": "GOOGLE_AI_API_KEY",
+      "value": "",
+      "is_secret": true,
+      "required": false
+    },
+    {
+      "key": "CORS_ORIGIN",
+      "value": "https://your-frontend-domain.com",
+      "is_secret": false,
+      "required": true
+    },
+    {
+      "key": "VITE_API_URL",
+      "value": "https://your-backend-domain.com",
+      "is_secret": false,
+      "required": true
+    }
+  ],
+  "volumes": [
+    {
+      "name": "mongodb_data",
+      "mount_path": "/data/db"
+    },
+    {
+      "name": "redis_data", 
+      "mount_path": "/data"
+    },
+    {
+      "name": "uploads",
+      "mount_path": "/app/uploads"
+    }
+  ],
+  "health_checks": [
+    {
+      "name": "backend",
+      "url": "/api/health",
+      "port": 5000,
+      "interval": 30,
+      "timeout": 10,
+      "retries": 3
+    }
+  ],
+  "resource_limits": {
+    "memory": "2048Mi",
+    "cpu": "1000m"
+  },
+  "auto_deploy": {
+    "enabled": true,
+    "branch": "main"
+  }
+}

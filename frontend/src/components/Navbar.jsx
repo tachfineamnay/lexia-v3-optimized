@@ -73,9 +73,6 @@ function Navbar() {
                           <Link to="/admin/questions" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
                             Gestion des questionnaires
                           </Link>
-                          <Link to="/admin/vertex" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
-                            Configuration Vertex AI
-                          </Link>
                         </div>
                       </div>
                     </div>
@@ -192,13 +189,6 @@ function Navbar() {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Gestion des questionnaires
-                    </Link>
-                    <Link 
-                      to="/admin/vertex" 
-                      className={`${isActive('/admin/vertex') ? 'bg-blue-50 border-blue-500 text-blue-700' : 'text-gray-500 hover:bg-gray-50 hover:text-primary'} block pl-6 pr-4 py-2 border-l-4 text-base font-medium`}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Configuration Vertex AI
                     </Link>
                   </>
                 )}

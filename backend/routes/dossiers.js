@@ -940,8 +940,25 @@ router.post('/generate', authMiddleware, async (req, res) => {
       draft.status = 'generating';
       await draft.save();
 
-      // Générer le dossier avec l'IA
-      const generatedContent = await vertexAiService.generateDossier(answers);
+      // Générer le dossier avec l'IA (OpenAI)
+      const { OpenAI } = require('openai');
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+      
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'user',
+            content: `Génère un dossier VAE complet basé sur les réponses suivantes : ${JSON.stringify(answers)}`
+          }
+        ],
+        max_tokens: 4000,
+        temperature: 0.7
+      });
+      
+      const generatedContent = completion.choices[0].message.content;
 
       // Mettre à jour le dossier avec le contenu généré
       draft.content = generatedContent;

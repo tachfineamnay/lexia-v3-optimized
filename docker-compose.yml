@@ -1,21 +1,22 @@
 version: '3.9'
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: lexia-postgres
+  # MongoDB Database
+  mongodb:
+    image: mongo:7-community
+    container_name: lexia-mongodb
     restart: unless-stopped
     environment:
-      POSTGRES_DB: lexia_v4
-      POSTGRES_USER: ${DB_USER:-lexia}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-lexia_secure_password}
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER:-lexia}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD:-lexia_secure_password}
+      MONGO_INITDB_DATABASE: lexia_v4
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mongodb_data:/data/db
+      - ./backend/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     ports:
-      - "5432:5432"
+      - "27017:27017"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-lexia}"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -45,9 +46,10 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 5000
-      DATABASE_URL: postgresql://${DB_USER:-lexia}:${DB_PASSWORD:-lexia_secure_password}@postgres:5432/lexia_v4
+      MONGODB_URI: mongodb://${DB_USER:-lexia}:${DB_PASSWORD:-lexia_secure_password}@mongodb:27017/lexia_v4?authSource=admin
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-your-super-secret-refresh-key}
       # AI API Keys
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
@@ -55,7 +57,7 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      postgres:
+      mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -79,7 +81,7 @@ services:
       - NODE_ENV=production
 
 volumes:
-  postgres_data:
+  mongodb_data:
   redis_data:
 
 networks:

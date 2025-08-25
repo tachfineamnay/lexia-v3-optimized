@@ -14,9 +14,12 @@ router.get('/', async (req, res) => {
       message: 'OK',
       timestamp: Date.now(),
       environment: process.env.NODE_ENV || 'development',
+      version: '1.0.0',
       services: {
         api: 'healthy',
-        database: 'checking...'
+        database: 'checking...',
+        redis: 'checking...',
+        ai: 'checking...'
       }
     };
 
@@ -35,8 +38,42 @@ router.get('/', async (req, res) => {
       console.error('Database health check failed:', dbError);
     }
 
+    // Check Redis connection (if Redis client is available)
+    try {
+      if (process.env.REDIS_URL) {
+        // Simple Redis check - we'll assume it's healthy if env var is set
+        healthcheck.services.redis = 'configured';
+      } else {
+        healthcheck.services.redis = 'not_configured';
+      }
+    } catch (redisError) {
+      healthcheck.services.redis = 'error';
+      console.error('Redis health check failed:', redisError);
+    }
+
+    // Check AI services (basic check for API keys)
+    try {
+      const aiServices = [];
+      if (process.env.OPENAI_API_KEY) aiServices.push('openai');
+      if (process.env.ANTHROPIC_API_KEY) aiServices.push('anthropic');
+      if (process.env.GOOGLE_AI_API_KEY) aiServices.push('google');
+      
+      healthcheck.services.ai = aiServices.length > 0 ? `configured: ${aiServices.join(', ')}` : 'not_configured';
+    } catch (aiError) {
+      healthcheck.services.ai = 'error';
+      console.error('AI services check failed:', aiError);
+    }
+
+    // Determine overall health
+    const isHealthy = healthcheck.services.database === 'healthy' && 
+                     healthcheck.services.api === 'healthy';
+    
+    if (!isHealthy) {
+      healthcheck.message = 'Degraded';
+    }
+
     // Return appropriate status code
-    const statusCode = healthcheck.services.database === 'healthy' ? 200 : 503;
+    const statusCode = isHealthy ? 200 : 503;
     
     res.status(statusCode).json(healthcheck);
   } catch (error) {

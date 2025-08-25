@@ -68,13 +68,6 @@ const AdminDashboard = () => {
       description: 'Superviser et valider les dossiers VAE'
     },
     {
-      title: 'Configuration Vertex AI',
-      icon: FiDatabase,
-      path: '/admin/vertex',
-      color: 'indigo',
-      description: 'Configurer l\'intégration Vertex AI'
-    },
-    {
       title: 'Questions VAE',
       icon: FiAlertCircle,
       path: '/admin/questions',

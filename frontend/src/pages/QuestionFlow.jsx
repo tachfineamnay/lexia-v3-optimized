@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import PopupQuestion from '../components/PopupQuestion';
-import vertexAiService from '../api/vertexAiService';
+import aiService from '../api/aiService';
 
 function QuestionFlow() {
   const [questionSet, setQuestionSet] = useState(null);
