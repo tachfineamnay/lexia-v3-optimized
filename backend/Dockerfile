@@ -10,7 +10,7 @@ RUN apk add --no-cache curl dumb-init
 COPY package*.json ./
 
 # Install ALL dependencies (including dev for build)
-RUN npm ci --include=dev
+RUN npm install
 
 # Production stage
 FROM node:18-alpine AS production
@@ -26,7 +26,7 @@ RUN apk add --no-cache curl dumb-init && \
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --only=production && npm cache clean --force
 
 # Copy source code
 COPY . .
