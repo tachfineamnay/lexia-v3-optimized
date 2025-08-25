@@ -45,6 +45,13 @@ jobs:
         env:
           CI: true
 
+      - name: 🏗️ Build frontend
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          CI: true
+          VITE_API_URL: http://localhost:5000
+
   # Build job
   build:
     name: 🏗️ Build Docker Images
@@ -92,7 +99,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🚀 Deploy to Coolify
-        if: github.repository_owner == 'your-username' # Remplacez par votre username
+        if: github.repository_owner == 'tachfineamnay'
         run: |
           # Trigger Coolify deployment via webhook
           curl -X POST "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
@@ -102,11 +109,11 @@ jobs:
           COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
 
       - name: ⏳ Wait for deployment
-        if: github.repository_owner == 'your-username'
+        if: github.repository_owner == 'tachfineamnay'
         run: sleep 60 # Wait for deployment to start
 
       - name: 🧪 Run post-deployment tests
-        if: github.repository_owner == 'your-username'
+        if: github.repository_owner == 'tachfineamnay'
         run: |
           chmod +x ./test-deployment.sh
           ./test-deployment.sh
