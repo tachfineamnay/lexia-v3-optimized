@@ -104,7 +104,7 @@ app.get('/api', (req, res) => {
 
 // Démarrage du serveur
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Serveur LexiaV4 démarré sur le port ${PORT}`);
   console.log(`📍 Environnement: ${process.env.NODE_ENV || 'development'}`);
 });
