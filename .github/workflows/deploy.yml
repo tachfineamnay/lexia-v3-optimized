@@ -23,18 +23,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org/'
 
       - name: 📥 Install backend dependencies
         working-directory: ./backend
         run: |
           rm -f package-lock.json
-          npm install
+          npm config set registry https://registry.npmjs.org/
+          npm install --no-optional
 
       - name: 📥 Install frontend dependencies
         working-directory: ./frontend
         run: |
           rm -f package-lock.json
-          npm install
+          npm config set registry https://registry.npmjs.org/
+          npm install --no-optional
 
       - name: 🏗️ Build frontend
         working-directory: ./frontend
