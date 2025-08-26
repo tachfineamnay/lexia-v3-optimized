@@ -14,8 +14,11 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install --only=production && npm cache clean --force
 
-# Copy all source code
+# Copy all source code and ensure server.js is present
 COPY . .
+
+# Verify server.js exists (will fail build if missing)
+RUN ls -la server.js
 
 # Create necessary directories with proper permissions
 RUN mkdir -p uploads exports logs && \
