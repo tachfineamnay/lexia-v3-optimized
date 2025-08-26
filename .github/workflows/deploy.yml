@@ -35,9 +35,9 @@ jobs:
       - name: 📥 Install frontend dependencies
         working-directory: ./frontend
         run: |
-          rm -f package-lock.json
+          rm -rf package-lock.json node_modules
           npm config set registry https://registry.npmjs.org/
-          npm install --no-optional
+          npm install
 
       - name: 🏗️ Build frontend
         working-directory: ./frontend
