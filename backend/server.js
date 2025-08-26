@@ -1,4 +1,26 @@
-require('dotenv').config();
+// Load environment variables if .env file exists
+try {
+  require('dotenv').config();
+} catch (err) {
+  console.log('No .env file found, using environment variables');
+}
+
+console.log('📦 LexiaV4 Backend Starting...');
+console.log('📊 Process Info:');
+console.log(`  - Node Version: ${process.version}`);
+console.log(`  - Platform: ${process.platform}`);
+console.log(`  - Architecture: ${process.arch}`);
+console.log(`  - Process ID: ${process.pid}`);
+
+// Handle unhandled errors
+process.on('uncaughtException', (err) => {
+  console.error('🚨 Uncaught Exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+});
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -30,22 +52,66 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/vae', require('./routes/vae'));
-app.use('/api/documents', require('./routes/documents'));
-app.use('/api/ai', require('./routes/ai'));
-app.use('/api/dashboard', require('./routes/dashboard'));
+// Routes with error handling
+try {
+  app.use('/api/auth', require('./routes/auth'));
+  console.log('✓ Auth routes loaded');
+} catch (err) {
+  console.error('❌ Error loading auth routes:', err.message);
+}
+
+try {
+  app.use('/api/users', require('./routes/users'));
+  console.log('✓ Users routes loaded');
+} catch (err) {
+  console.error('❌ Error loading users routes:', err.message);
+}
+
+try {
+  app.use('/api/vae', require('./routes/vae'));
+  console.log('✓ VAE routes loaded');
+} catch (err) {
+  console.error('❌ Error loading VAE routes:', err.message);
+}
+
+try {
+  app.use('/api/documents', require('./routes/documents'));
+  console.log('✓ Documents routes loaded');
+} catch (err) {
+  console.error('❌ Error loading documents routes:', err.message);
+}
+
+try {
+  app.use('/api/ai', require('./routes/ai'));
+  console.log('✓ AI routes loaded');
+} catch (err) {
+  console.error('❌ Error loading AI routes:', err.message);
+}
+
+try {
+  app.use('/api/dashboard', require('./routes/dashboard'));
+  console.log('✓ Dashboard routes loaded');
+} catch (err) {
+  console.error('❌ Error loading dashboard routes:', err.message);
+}
 
 // Route de santé
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  const health = {
+    status: 'ok',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    version: '2.0.0'
-  });
+    environment: process.env.NODE_ENV || 'development',
+    version: '2.0.0',
+    database: {
+      connected: mongoose.connection.readyState === 1,
+      state: mongoose.connection.readyState
+    },
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  };
+  
+  console.log('🔍 Health check requested:', health.status);
+  res.json(health);
 });
 
 // Gestion des erreurs 404
@@ -62,13 +128,34 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Environment variables validation
+const requiredEnvVars = ['MONGODB_URI'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  console.error('❌ Missing required environment variables:', missingEnvVars);
+  console.log('Available environment variables:');
+  Object.keys(process.env)
+    .filter(key => key.startsWith('MONGODB') || key.startsWith('DB_') || key.startsWith('NODE_'))
+    .forEach(key => console.log(`  ${key}=${process.env[key]}`));
+}
+
 // Connexion à MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lexiav4', {
+const mongoUri = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/lexiav4';
+console.log('🔗 Attempting MongoDB connection to:', mongoUri.replace(/\/\/.*@/, '//***:***@'));
+
+mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log('✅ Connecté à MongoDB'))
-.catch(err => console.error('❌ Erreur connexion MongoDB:', err));
+.then(() => {
+  console.log('✅ Connecté à MongoDB');
+  console.log('🔗 MongoDB connection state:', mongoose.connection.readyState);
+})
+.catch(err => {
+  console.error('❌ Erreur connexion MongoDB:', err.message);
+  console.log('🔄 Application will continue without database connection');
+});
 
 // Create necessary directories
 const createDirectories = () => {
@@ -90,8 +177,11 @@ app.get('/api', (req, res) => {
     name: 'LexiaV3 API',
     version: '1.0.0',
     status: 'running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
     endpoints: [
       '/api/health',
+      '/api/test',
       '/api/auth',
       '/api/users',
       '/api/vae',
@@ -102,11 +192,48 @@ app.get('/api', (req, res) => {
   });
 });
 
+// Simple test endpoint
+app.get('/api/test', (req, res) => {
+  console.log('🧪 Test endpoint called');
+  res.json({
+    success: true,
+    message: 'LexiaV4 API is working!',
+    timestamp: new Date().toISOString(),
+    headers: req.headers,
+    query: req.query
+  });
+});
+
 // Démarrage du serveur
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Serveur LexiaV4 démarré sur le port ${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0';
+
+console.log('🚀 Starting LexiaV4 server...');
+console.log('📊 Server configuration:');
+console.log(`  - Port: ${PORT}`);
+console.log(`  - Host: ${HOST}`);
+console.log(`  - Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`  - CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
+console.log('📞 Attempting to bind to address...');
+
+const server = app.listen(PORT, HOST, () => {
+  console.log(`🚀 Serveur LexiaV4 démarré sur ${HOST}:${PORT}`);
   console.log(`📍 Environnement: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔗 Health check available at: http://${HOST}:${PORT}/api/health`);
+  console.log(`📋 API info available at: http://${HOST}:${PORT}/api`);
+  console.log(`🧪 Test endpoint available at: http://${HOST}:${PORT}/api/test`);
+  console.log('✅ Server is ready to accept connections!');
+});
+
+// Server error handling
+server.on('error', (err) => {
+  console.error('🚨 Server error:', err);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use`);
+  } else if (err.code === 'EADDRNOTAVAIL') {
+    console.error(`❌ Address ${HOST} is not available`);
+  }
+  process.exit(1);
 });
 
 // Graceful shutdown
