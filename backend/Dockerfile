@@ -14,8 +14,12 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install --only=production && npm cache clean --force
 
-# Copy all source code and ensure server.js is present
+# Copy all source code and debug what's available
 COPY . .
+
+# Debug: List all files to see what was copied
+RUN echo "=== Contents of /app ===" && ls -la
+RUN echo "=== Contents of current directory ===" && find . -name "*.js" -type f
 
 # Verify server.js exists (will fail build if missing)
 RUN ls -la server.js
