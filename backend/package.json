@@ -10,8 +10,6 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.20.0",
-    "@google/generative-ai": "^0.7.0",
     "bcryptjs": "^2.4.3",
     "chai": "^5.2.0",
     "cors": "^2.8.5",
@@ -47,9 +45,8 @@
     "api",
     "express",
     "ai",
-    "gpt4",
-    "claude",
-    "gemini"
+    "openai",
+    "gpt4"
   ],
   "author": "LexiaV4 Team",
   "license": "MIT",
