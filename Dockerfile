@@ -3,27 +3,31 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install curl for health checks and dumb-init for signal handling
-RUN apk add --no-cache curl dumb-init && \
-    addgroup -g 1001 -S nodejs && \
+# Install system dependencies with retry and timeout settings
+RUN set -eux; \
+    apk update --no-cache; \
+    apk add --no-cache --virtual .build-deps curl dumb-init; \
+    addgroup -g 1001 -S nodejs; \
     adduser -S lexia -u 1001
 
 # Create app directory and set permissions
-RUN mkdir -p /app && chown lexia:nodejs /app
+RUN mkdir -p /app uploads exports logs && \
+    chown -R lexia:nodejs /app && \
+    chmod -R 755 /app
 
 # Copy package files from backend directory
 COPY backend/package*.json ./
 
-# Install dependencies
-RUN npm install --only=production && npm cache clean --force
+# Install dependencies with timeout and retry settings
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm config set fetch-timeout 300000 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm install --only=production --no-audit --no-fund && \
+    npm cache clean --force
 
 # Copy all backend source code
 COPY backend/ .
-
-# Create necessary directories with proper permissions
-RUN mkdir -p uploads exports logs && \
-    chown -R lexia:nodejs /app && \
-    chmod -R 755 uploads exports logs
 
 # Switch to non-root user
 USER lexia
@@ -42,4 +46,4 @@ EXPOSE 5000
 
 # Start the application with better logging
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["sh", "-c", "echo 'Starting LexiaV4 application...' && node server.js"]
+CMD ["node", "server.js"]
