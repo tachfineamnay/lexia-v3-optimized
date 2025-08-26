@@ -28,14 +28,13 @@ jobs:
       - name: 📥 Install backend dependencies
         working-directory: ./backend
         run: |
-          rm -f package-lock.json
           npm config set registry https://registry.npmjs.org/
           npm install --no-optional
 
       - name: 📥 Install frontend dependencies
         working-directory: ./frontend
         run: |
-          rm -rf package-lock.json node_modules
+          rm -rf node_modules
           npm config set registry https://registry.npmjs.org/
           npm install
 

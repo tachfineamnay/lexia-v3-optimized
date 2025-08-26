@@ -17,9 +17,6 @@ RUN npm install --only=production && npm cache clean --force
 # Copy all backend source code
 COPY backend/ .
 
-# Verify server.js exists (will fail build if missing)
-RUN ls -la server.js
-
 # Create necessary directories with proper permissions
 RUN mkdir -p uploads exports logs && \
     chown -R lexia:nodejs . && \
