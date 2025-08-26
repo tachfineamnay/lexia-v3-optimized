@@ -8,14 +8,14 @@ RUN apk add --no-cache curl dumb-init && \
     addgroup -g 1001 -S nodejs && \
     adduser -S lexia -u 1001
 
-# Copy package files from backend directory
-COPY backend/package*.json ./
+# Copy package files
+COPY package*.json ./
 
 # Install dependencies
 RUN npm install --only=production && npm cache clean --force
 
 # Copy all backend source code
-COPY backend/ .
+COPY . .
 
 # Create necessary directories with proper permissions
 RUN mkdir -p uploads exports logs && \
