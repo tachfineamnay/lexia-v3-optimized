@@ -8,14 +8,14 @@ RUN apk add --no-cache curl dumb-init && \
     addgroup -g 1001 -S nodejs && \
     adduser -S lexia -u 1001
 
-# Copy package files
-COPY package*.json ./
+# Copy package files from backend directory
+COPY backend/package*.json ./
 
 # Install dependencies
 RUN npm install --only=production && npm cache clean --force
 
-# Copy all source code and ensure server.js is present
-COPY . .
+# Copy all backend source code and ensure server.js is present
+COPY backend/ .
 
 # Verify server.js exists (will fail build if missing)
 RUN ls -la server.js
