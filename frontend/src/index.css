@@ -11,24 +11,34 @@
 
 html {
   scroll-behavior: smooth;
-  }
+}
 
-  body {
+body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f9fafb;
-  color: #111827;
-  }
+  line-height: 1.5;
+}
 
 /* Styles globaux pour l'application */
 #root {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  }
+}
+
+/* Fix pour les icônes qui apparaissent trop grandes */
+svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Fix pour Heroicons spécifiquement */
+.heroicon {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+}
 
 /* Utilitaires personnalisés */
 .container-app {
@@ -36,10 +46,10 @@ html {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 1rem;
-  }
-  
-  /* Animations */
-  @keyframes fadeIn {
+}
+
+/* Animations */
+@keyframes fadeIn {
   from {
     opacity: 0;
     transform: translateY(10px);
@@ -48,18 +58,18 @@ html {
     opacity: 1;
     transform: translateY(0);
   }
-  }
-  
+}
+
 .fade-in {
-    animation: fadeIn 0.3s ease-out;
-  }
+  animation: fadeIn 0.3s ease-out;
+}
 
 /* Scrollbar personnalisée */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
-  }
-  
+}
+
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
@@ -67,8 +77,8 @@ html {
 ::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 4px;
-  }
-  
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
@@ -77,8 +87,8 @@ html {
 :focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
-  }
-  
+}
+
 /* Styles pour les liens */
 a {
   color: inherit;
@@ -89,8 +99,8 @@ a {
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  }
-  
+}
+
 /* Utilitaires de mise en page responsive */
 @media (max-width: 640px) {
   .container-app {

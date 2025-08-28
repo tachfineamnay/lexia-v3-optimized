@@ -72,7 +72,7 @@ const Landing = () => {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center space-x-2"
             >
-              <AcademicCapIcon className="h-8 w-8 text-purple-400" />
+              <AcademicCapIcon className="h-6 w-6 text-purple-400" />
               <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                 Lexia V4
               </span>
@@ -124,7 +124,7 @@ const Landing = () => {
                   className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-full hover:shadow-xl hover:shadow-purple-500/25 transition group"
                 >
                   Démarrer gratuitement
-                  <ArrowRightIcon className="ml-2 h-5 w-5 group-hover:translate-x-1 transition" />
+                  <ArrowRightIcon className="ml-2 h-4 w-4 group-hover:translate-x-1 transition" />
                 </Link>
               </motion.div>
               
@@ -192,7 +192,7 @@ const Landing = () => {
                 className="bg-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/10 hover:border-white/20 transition"
               >
                 <div className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${feature.color} mb-4`}>
-                  <feature.icon className="h-8 w-8 text-white" />
+                  <feature.icon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-2xl font-semibold text-white mb-3">{feature.title}</h3>
                 <p className="text-gray-300">{feature.description}</p>
@@ -232,7 +232,7 @@ const Landing = () => {
               >
                 <div className="flex mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <StarIcon key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                    <StarIcon key={i} className="h-4 w-4 text-yellow-400 fill-current" />
                   ))}
                 </div>
                 <p className="text-gray-300 mb-4 italic">"{testimonial.content}"</p>
@@ -256,7 +256,7 @@ const Landing = () => {
             viewport={{ once: true }}
             className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-12"
           >
-            <RocketLaunchIcon className="h-16 w-16 text-white mx-auto mb-6" />
+            <RocketLaunchIcon className="h-12 w-12 text-white mx-auto mb-6" />
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Prêt à transformer votre carrière ?
             </h2>
@@ -269,7 +269,7 @@ const Landing = () => {
                 className="inline-flex items-center px-8 py-4 bg-white text-purple-600 font-semibold rounded-full hover:shadow-xl transition group"
               >
                 Créer mon compte gratuitement
-                <ArrowRightIcon className="ml-2 h-5 w-5 group-hover:translate-x-1 transition" />
+                <ArrowRightIcon className="ml-2 h-4 w-4 group-hover:translate-x-1 transition" />
               </Link>
             </motion.div>
           </motion.div>

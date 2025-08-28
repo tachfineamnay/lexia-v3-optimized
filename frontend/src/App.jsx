@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 
 // Pages
@@ -24,7 +24,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ToastProvider } from './hooks/useToast';
 
-import './styles/lexia-design-system.css';
+// import './styles/lexia-design-system.css';
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -68,13 +68,14 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const isLandingPage = location.pathname === '/';
+  
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-          <Navbar />
-          <main className="container mx-auto px-4 py-8">
+    <div className={isLandingPage ? "min-h-screen" : "min-h-screen bg-gray-50 dark:bg-gray-900"}>
+      {!isLandingPage && <Navbar />}
+      <main className={isLandingPage ? "" : "container mx-auto px-4 py-8"}>
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Landing />} />
@@ -149,6 +150,14 @@ function App() {
             </Routes>
           </main>
         </div>
+  );
+}
+
+function App() {
+  return (
+    <ToastProvider>
+      <AuthProvider>
+        <AppContent />
       </AuthProvider>
     </ToastProvider>
   );
