@@ -36,10 +36,12 @@ USER lexia
 ENV NODE_ENV=production
 ENV PORT=5000
 ENV HOST=0.0.0.0
+# Set minimal MongoDB URI to prevent startup failures
+ENV MONGODB_URI=mongodb://localhost:27017/lexiav4
 
-# Health check with more lenient timing (temporarily disabled for debugging)
-# HEALTHCHECK --interval=60s --timeout=30s --start-period=120s --retries=5 \
-#   CMD curl -f http://localhost:5000/api/health || exit 1
+# Health check with very lenient timing for Coolify compatibility
+HEALTHCHECK --interval=120s --timeout=30s --start-period=180s --retries=3 \
+  CMD curl -f http://localhost:5000/api/health || exit 1
 
 # Expose port
 EXPOSE 5000
