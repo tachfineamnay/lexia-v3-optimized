@@ -667,6 +667,7 @@ function AdminUploadQuestions() {
         )}
       </div>
     </div>
+  );
 }
 
 export default AdminUploadQuestions; 
