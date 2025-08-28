@@ -1,5 +1,20 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
+import LoadingSpinner from '../components/LoadingSpinner';
+import {
+  UserIcon,
+  LockClosedIcon,
+  EnvelopeIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  AcademicCapIcon,
+  CalendarIcon,
+  ClockIcon,
+  ShieldCheckIcon,
+  EyeIcon,
+  EyeSlashIcon
+} from '@heroicons/react/24/outline';
 
 function Profile() {
   const { user, updateUser } = useAuth();
@@ -16,6 +31,11 @@ function Profile() {
   });
   const [activeTab, setActiveTab] = useState('profile');
   const [validationErrors, setValidationErrors] = useState({});
+  const [showPasswords, setShowPasswords] = useState({
+    currentPassword: false,
+    newPassword: false,
+    confirmPassword: false
+  });
 
   useEffect(() => {
     if (user) {
@@ -169,111 +189,185 @@ function Profile() {
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+        <LoadingSpinner size="lg" color="primary" text="Chargement de votre profil..." />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Your Profile</h1>
-      
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'profile'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Profile Information
-          </button>
-          <button
-            onClick={() => setActiveTab('password')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'password'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Change Password
-          </button>
-        </nav>
-      </div>
-      
-      {/* Success Message */}
-      {success && (
-        <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded relative" role="alert">
-          <span className="block sm:inline">{success}</span>
-        </div>
-      )}
-      
-      {/* Error Message */}
-      {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <span className="block sm:inline">{error}</span>
-        </div>
-      )}
-      
-      {/* Profile Information Form */}
-      {activeTab === 'profile' && (
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Profile Information</h3>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">Update your personal details</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <AcademicCapIcon className="h-10 w-10 text-purple-400" />
+            <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Lexia V4
+            </span>
           </div>
-          
-          <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
-            <form onSubmit={handleProfileUpdate}>
-              <div className="grid grid-cols-6 gap-6">
-                <div className="col-span-6 sm:col-span-3">
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                    First name
-                  </label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                      validationErrors.firstName ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                  />
-                  {validationErrors.firstName && (
-                    <p className="mt-2 text-sm text-red-600">{validationErrors.firstName}</p>
-                  )}
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
+              {user.firstName?.charAt(0)?.toUpperCase()}{user.lastName?.charAt(0)?.toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold text-white">
+                {user.firstName} {user.lastName}
+              </h1>
+              <p className="text-gray-300 text-xl flex items-center gap-2">
+                <EnvelopeIcon className="h-5 w-5" />
+                {user.email}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+        
+        {/* Tab Navigation */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8"
+        >
+          <div className="flex gap-2 p-1 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 w-fit">
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                activeTab === 'profile'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                  : 'text-gray-300 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <UserIcon className="h-5 w-5" />
+              Informations du profil
+            </button>
+            <button
+              onClick={() => setActiveTab('password')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                activeTab === 'password'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                  : 'text-gray-300 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <LockClosedIcon className="h-5 w-5" />
+              Changer le mot de passe
+            </button>
+          </div>
+        </motion.div>
+        
+        {/* Success Message */}
+        <AnimatePresence>
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-6 bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-2xl flex items-center gap-3"
+            >
+              <CheckCircleIcon className="h-5 w-5 flex-shrink-0" />
+              <span className="font-medium">{success}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        {/* Error Message */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl flex items-center gap-3"
+            >
+              <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
+              <span className="font-medium">{error}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      
+        {/* Profile Information Form */}
+        <AnimatePresence>
+          {activeTab === 'profile' && (
+            <motion.div
+              key="profile-form"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:border-white/20 transition-all duration-300"
+            >
+              <div className="mb-8">
+                <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                  <UserIcon className="h-6 w-6 text-purple-400" />
+                  Informations du profil
+                </h3>
+                <p className="text-gray-300">Mettez à jour vos informations personnelles</p>
+              </div>
+              
+              <form onSubmit={handleProfileUpdate} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="firstName" className="block text-sm font-semibold text-white mb-2">
+                      Prénom
+                    </label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      id="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 hover:border-white/20 ${
+                        validationErrors.firstName ? 'border-red-500/50 bg-red-500/5' : 'border-white/10'
+                      }`}
+                      placeholder="Entrez votre prénom"
+                    />
+                    {validationErrors.firstName && (
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="mt-2 text-sm text-red-400 flex items-center gap-2"
+                      >
+                        <ExclamationTriangleIcon className="h-4 w-4" />
+                        {validationErrors.firstName}
+                      </motion.p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="lastName" className="block text-sm font-semibold text-white mb-2">
+                      Nom
+                    </label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      id="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 hover:border-white/20 ${
+                        validationErrors.lastName ? 'border-red-500/50 bg-red-500/5' : 'border-white/10'
+                      }`}
+                      placeholder="Entrez votre nom"
+                    />
+                    {validationErrors.lastName && (
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="mt-2 text-sm text-red-400 flex items-center gap-2"
+                      >
+                        <ExclamationTriangleIcon className="h-4 w-4" />
+                        {validationErrors.lastName}
+                      </motion.p>
+                    )}
+                  </div>
                 </div>
 
-                <div className="col-span-6 sm:col-span-3">
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                    Last name
-                  </label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                      validationErrors.lastName ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                  />
-                  {validationErrors.lastName && (
-                    <p className="mt-2 text-sm text-red-600">{validationErrors.lastName}</p>
-                  )}
-                </div>
-
-                <div className="col-span-6">
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    Email address
+                <div>
+                  <label htmlFor="email" className="block text-sm font-semibold text-white mb-2">
+                    Adresse email
                   </label>
                   <input
                     type="email"
@@ -281,147 +375,274 @@ function Profile() {
                     id="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                      validationErrors.email ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 hover:border-white/20 ${
+                      validationErrors.email ? 'border-red-500/50 bg-red-500/5' : 'border-white/10'
                     }`}
+                    placeholder="Entrez votre adresse email"
                   />
                   {validationErrors.email && (
-                    <p className="mt-2 text-sm text-red-600">{validationErrors.email}</p>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="mt-2 text-sm text-red-400 flex items-center gap-2"
+                    >
+                      <ExclamationTriangleIcon className="h-4 w-4" />
+                      {validationErrors.email}
+                    </motion.p>
                   )}
                 </div>
+                
+                <div className="flex justify-end">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={loading}
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <>
+                        <LoadingSpinner size="sm" color="white" />
+                        Sauvegarde...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircleIcon className="h-5 w-5" />
+                        Sauvegarder les modifications
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      
+        {/* Change Password Form */}
+        <AnimatePresence>
+          {activeTab === 'password' && (
+            <motion.div
+              key="password-form"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:border-white/20 transition-all duration-300"
+            >
+              <div className="mb-8">
+                <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                  <LockClosedIcon className="h-6 w-6 text-purple-400" />
+                  Changer le mot de passe
+                </h3>
+                <p className="text-gray-300">Mettez à jour votre mot de passe pour sécuriser votre compte</p>
               </div>
               
-              <div className="mt-6">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full sm:w-auto inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  {loading ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-      
-      {/* Change Password Form */}
-      {activeTab === 'password' && (
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Change Password</h3>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">Update your password</p>
-          </div>
-          
-          <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
-            <form onSubmit={handlePasswordUpdate}>
-              <div className="space-y-6">
+              <form onSubmit={handlePasswordUpdate} className="space-y-6">
                 <div>
-                  <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
-                    Current Password
+                  <label htmlFor="currentPassword" className="block text-sm font-semibold text-white mb-2">
+                    Mot de passe actuel
                   </label>
-                  <div className="mt-1">
+                  <div className="relative">
                     <input
-                      type="password"
+                      type={showPasswords.currentPassword ? 'text' : 'password'}
                       name="currentPassword"
                       id="currentPassword"
                       value={formData.currentPassword}
                       onChange={handleChange}
-                      className={`block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                        validationErrors.currentPassword ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-3 pr-12 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 hover:border-white/20 ${
+                        validationErrors.currentPassword ? 'border-red-500/50 bg-red-500/5' : 'border-white/10'
                       }`}
+                      placeholder="Entrez votre mot de passe actuel"
                     />
-                    {validationErrors.currentPassword && (
-                      <p className="mt-2 text-sm text-red-600">{validationErrors.currentPassword}</p>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, currentPassword: !prev.currentPassword }))}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    >
+                      {showPasswords.currentPassword ? (
+                        <EyeSlashIcon className="h-5 w-5" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" />
+                      )}
+                    </button>
                   </div>
+                  {validationErrors.currentPassword && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="mt-2 text-sm text-red-400 flex items-center gap-2"
+                    >
+                      <ExclamationTriangleIcon className="h-4 w-4" />
+                      {validationErrors.currentPassword}
+                    </motion.p>
+                  )}
                 </div>
 
                 <div>
-                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                    New Password
+                  <label htmlFor="newPassword" className="block text-sm font-semibold text-white mb-2">
+                    Nouveau mot de passe
                   </label>
-                  <div className="mt-1">
+                  <div className="relative">
                     <input
-                      type="password"
+                      type={showPasswords.newPassword ? 'text' : 'password'}
                       name="newPassword"
                       id="newPassword"
                       value={formData.newPassword}
                       onChange={handleChange}
-                      className={`block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                        validationErrors.newPassword ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-3 pr-12 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 hover:border-white/20 ${
+                        validationErrors.newPassword ? 'border-red-500/50 bg-red-500/5' : 'border-white/10'
                       }`}
+                      placeholder="Entrez un nouveau mot de passe"
                     />
-                    {validationErrors.newPassword && (
-                      <p className="mt-2 text-sm text-red-600">{validationErrors.newPassword}</p>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, newPassword: !prev.newPassword }))}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    >
+                      {showPasswords.newPassword ? (
+                        <EyeSlashIcon className="h-5 w-5" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" />
+                      )}
+                    </button>
                   </div>
+                  {validationErrors.newPassword && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="mt-2 text-sm text-red-400 flex items-center gap-2"
+                    >
+                      <ExclamationTriangleIcon className="h-4 w-4" />
+                      {validationErrors.newPassword}
+                    </motion.p>
+                  )}
                 </div>
 
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                    Confirm New Password
+                  <label htmlFor="confirmPassword" className="block text-sm font-semibold text-white mb-2">
+                    Confirmer le nouveau mot de passe
                   </label>
-                  <div className="mt-1">
+                  <div className="relative">
                     <input
-                      type="password"
+                      type={showPasswords.confirmPassword ? 'text' : 'password'}
                       name="confirmPassword"
                       id="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className={`block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                        validationErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-3 pr-12 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 hover:border-white/20 ${
+                        validationErrors.confirmPassword ? 'border-red-500/50 bg-red-500/5' : 'border-white/10'
                       }`}
+                      placeholder="Confirmez votre nouveau mot de passe"
                     />
-                    {validationErrors.confirmPassword && (
-                      <p className="mt-2 text-sm text-red-600">{validationErrors.confirmPassword}</p>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, confirmPassword: !prev.confirmPassword }))}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    >
+                      {showPasswords.confirmPassword ? (
+                        <EyeSlashIcon className="h-5 w-5" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" />
+                      )}
+                    </button>
                   </div>
+                  {validationErrors.confirmPassword && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="mt-2 text-sm text-red-400 flex items-center gap-2"
+                    >
+                      <ExclamationTriangleIcon className="h-4 w-4" />
+                      {validationErrors.confirmPassword}
+                    </motion.p>
+                  )}
+                </div>
+                
+                <div className="flex justify-end">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={loading}
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <>
+                        <LoadingSpinner size="sm" color="white" />
+                        Mise à jour...
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheckIcon className="h-5 w-5" />
+                        Mettre à jour le mot de passe
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      
+        {/* Account Information */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:border-white/20 transition-all duration-300"
+        >
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+              <UserIcon className="h-6 w-6 text-purple-400" />
+              Informations du compte
+            </h3>
+            <p className="text-gray-300">Détails concernant votre compte</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-purple-500/20 rounded-lg">
+                  <ShieldCheckIcon className="h-5 w-5 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Type de compte</p>
+                  <p className="text-lg font-semibold text-white">
+                    {user.role === 'admin' ? 'Administrateur' : 'Utilisateur Standard'}
+                  </p>
                 </div>
               </div>
-              
-              <div className="mt-6">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full sm:w-auto inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  {loading ? 'Updating...' : 'Update Password'}
-                </button>
+            </div>
+            
+            <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <CalendarIcon className="h-5 w-5 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Date d'inscription</p>
+                  <p className="text-lg font-semibold text-white">
+                    {new Date(user.createdAt).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
               </div>
-            </form>
+            </div>
+            
+            <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-green-500/20 rounded-lg">
+                  <ClockIcon className="h-5 w-5 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Dernière connexion</p>
+                  <p className="text-lg font-semibold text-white">
+                    {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString('fr-FR') : 'Non disponible'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-      
-      {/* Account Information */}
-      <div className="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="px-4 py-5 sm:px-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">Account Information</h3>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">Details about your account</p>
-        </div>
-        <div className="border-t border-gray-200">
-          <dl>
-            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">Account Type</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {user.role === 'admin' ? 'Administrator' : 'Standard User'}
-              </dd>
-            </div>
-            <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">Joined Date</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {new Date(user.createdAt).toLocaleDateString()}
-              </dd>
-            </div>
-            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">Last Login</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Not available'}
-              </dd>
-            </div>
-          </dl>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

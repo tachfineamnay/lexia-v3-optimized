@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  AcademicCapIcon,
+  ArrowLeftIcon,
+  DocumentTextIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  SparklesIcon,
+  ClockIcon
+} from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
+import LoadingSpinner from '../components/LoadingSpinner';
 import aiService from '../api/aiService';
 import VaeResponseBlock from '../components/VaeResponseBlock';
 import DossierEditor from '../components/DossierEditor';
@@ -221,109 +232,230 @@ function FinalDossier() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="flex items-center gap-3 mb-6 justify-center">
+            <AcademicCapIcon className="h-10 w-10 text-purple-400" />
+            <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Lexia V4
+            </span>
+          </div>
+          <LoadingSpinner size="lg" color="primary" />
+          <p className="text-gray-300 mt-4 text-lg">Génération de votre dossier VAE...</p>
+        </motion.div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 p-4 rounded-md">
-        <h2 className="text-lg font-semibold text-red-800">Erreur</h2>
-        <p className="text-red-700">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-2 px-4 py-2 bg-red-100 text-red-800 rounded-md hover:bg-red-200"
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md"
         >
-          Réessayer
-        </button>
+          <div className="flex items-center gap-3 mb-6 justify-center">
+            <AcademicCapIcon className="h-10 w-10 text-purple-400" />
+            <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Lexia V4
+            </span>
+          </div>
+          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 backdrop-blur-xl">
+            <ExclamationTriangleIcon className="h-16 w-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-red-400 mb-4">Erreur</h2>
+            <p className="text-red-300 mb-6">{error}</p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => window.location.reload()}
+              className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+            >
+              Réessayer
+            </motion.button>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   if (!dossier) {
     return (
-      <div className="bg-yellow-50 p-4 rounded-md">
-        <h2 className="text-lg font-semibold text-yellow-800">Aucun dossier disponible</h2>
-        <p className="text-yellow-700">Aucun dossier n'a été trouvé ou généré.</p>
-        <button
-          onClick={generateDossier}
-          className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md"
         >
-          Générer un dossier
-        </button>
+          <div className="flex items-center gap-3 mb-6 justify-center">
+            <AcademicCapIcon className="h-10 w-10 text-purple-400" />
+            <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Lexia V4
+            </span>
+          </div>
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-8 backdrop-blur-xl">
+            <DocumentTextIcon className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-yellow-400 mb-4">Aucun dossier disponible</h2>
+            <p className="text-yellow-300 mb-6">Aucun dossier n'a été trouvé ou généré.</p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={generateDossier}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2 mx-auto"
+            >
+              <SparklesIcon className="h-5 w-5" />
+              Générer un dossier
+            </motion.button>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-6 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Dossier VAE
-        </h1>
-        <div className="flex space-x-3">
-          <Link
-            to="/question-flow"
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <AcademicCapIcon className="h-10 w-10 text-purple-400" />
+            <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Lexia V4
+            </span>
+          </div>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+                Dossier VAE
+              </h1>
+              <p className="text-gray-300 text-xl">
+                Votre dossier de validation des acquis de l'expérience complet et personnalisé
+              </p>
+            </div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Link
+                to="/question-flow"
+                className="inline-flex items-center gap-3 px-6 py-3 border border-white/20 text-white bg-white/5 hover:bg-white/10 rounded-xl font-semibold transition-all backdrop-blur-xl"
+              >
+                <ArrowLeftIcon className="h-5 w-5" />
+                Retour aux questions
+              </Link>
+            </motion.div>
+          </div>
+        </motion.div>
+        
+        {/* Progress indicator */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8"
+        >
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300">
+            <div className="flex items-center justify-between">
+              <motion.div 
+                className="flex items-center"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+                  <CheckCircleIcon className="h-5 w-5" />
+                </div>
+                <span className="ml-3 text-green-400 font-semibold">Documents</span>
+              </motion.div>
+              
+              <div className="flex-grow mx-4 h-2 bg-white/10 rounded-full">
+                <div className="h-full bg-green-500 w-full rounded-full" />
+              </div>
+              
+              <motion.div 
+                className="flex items-center"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+                  <CheckCircleIcon className="h-5 w-5" />
+                </div>
+                <span className="ml-3 text-green-400 font-semibold">Questions</span>
+              </motion.div>
+              
+              <div className="flex-grow mx-4 h-2 bg-white/10 rounded-full">
+                <div className="h-full bg-green-500 w-full rounded-full" />
+              </div>
+              
+              <motion.div 
+                className="flex items-center"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+                  3
+                </div>
+                <span className="ml-3 text-white font-semibold">Dossier</span>
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+        
+        {/* Alerts */}
+        <AnimatePresence>
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-6 bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-2xl flex items-center gap-3 backdrop-blur-xl"
+            >
+              <CheckCircleIcon className="h-5 w-5 flex-shrink-0" />
+              <span className="font-medium">{success}</span>
+            </motion.div>
+          )}
+          
+          {error && !loading && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl flex items-center gap-3 backdrop-blur-xl"
+            >
+              <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
+              <span className="font-medium">{error}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        {/* Dossier Editor */}
+        {dossier && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
           >
-            <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-            Retour aux questions
-          </Link>
-        </div>
+            <DossierEditor 
+              sections={dossier.sections || []}
+              onSave={handleSave}
+              onRegenerate={handleRegenerateSection}
+              onExport={handleExport}
+              isSaving={isSaving}
+              isExporting={exportStatus === 'loading'}
+              isRegenerating={isRegenerating}
+              regeneratingSection={regenerationSection}
+              error={error}
+              dossier={dossier}
+              userProfile={userProfile}
+            />
+          </motion.div>
+        )}
       </div>
-      
-      {success && (
-        <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-green-700">{success}</p>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {error && !loading && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {dossier && (
-        <DossierEditor 
-          sections={dossier.sections || []}
-          onSave={handleSave}
-          onRegenerate={handleRegenerateSection}
-          onExport={handleExport}
-          isSaving={isSaving}
-          isExporting={exportStatus === 'loading'}
-          isRegenerating={isRegenerating}
-          regeneratingSection={regenerationSection}
-          error={error}
-          dossier={dossier}
-          userProfile={userProfile}
-        />
-      )}
     </div>
   );
 }

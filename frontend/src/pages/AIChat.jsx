@@ -111,52 +111,84 @@ const AIChat = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
-      <div className="max-w-6xl mx-auto p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden"
+          className="mb-8"
         >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6">
-            <h1 className="text-3xl font-bold text-white mb-2">Assistant IA VAE</h1>
-            <p className="text-white/80">Votre coach virtuel pour réussir votre VAE</p>
-            
-            {/* Model Selector */}
-            <div className="flex gap-2 mt-4">
+          <div className="flex items-center gap-3 mb-4">
+            <AcademicCapIcon className="h-10 w-10 text-purple-400" />
+            <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Lexia V4
+            </span>
+          </div>
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+              Assistant IA VAE
+            </h1>
+            <p className="text-gray-300 text-xl">
+              Votre coach virtuel pour réussir votre VAE
+            </p>
+          </div>
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300"
+        >
+          {/* Model Selector */}
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <SparklesIcon className="h-6 w-6" />
+              Choisissez votre modèle IA
+            </h2>
+            <div className="flex flex-wrap gap-3">
               {aiModels.map((model) => (
                 <motion.button
                   key={model.id}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedModel(model.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full transition ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
                     selectedModel === model.id
-                      ? 'bg-white text-purple-600'
-                      : 'bg-white/20 text-white hover:bg-white/30'
+                      ? 'bg-white text-purple-600 shadow-lg'
+                      : 'bg-white/20 text-white hover:bg-white/30 border border-white/30'
                   }`}
                 >
                   <model.icon className="h-5 w-5" />
-                  <span className="font-medium">{model.name}</span>
+                  <span>{model.name}</span>
                 </motion.button>
               ))}
             </div>
           </div>
 
           {/* Chat Area */}
-          <div className="h-[600px] overflow-y-auto p-6 space-y-4">
+          <div className="h-[600px] overflow-y-auto p-6 space-y-4 bg-white/5">
             {messages.length === 0 && showSuggestions && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="text-center py-12"
               >
-                <SparklesIcon className="h-16 w-16 text-purple-400 mx-auto mb-4" />
-                <h2 className="text-2xl font-semibold text-white mb-2">
+                <motion.div
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="mb-6"
+                >
+                  <div className="w-24 h-24 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <SparklesIcon className="h-12 w-12 text-purple-400" />
+                  </div>
+                </motion.div>
+                <h2 className="text-2xl font-bold text-white mb-2">
                   Bonjour {user?.firstName} ! 👋
                 </h2>
-                <p className="text-gray-300 mb-8">
+                <p className="text-gray-300 mb-8 text-lg">
                   Je suis votre assistant IA personnel pour votre VAE. Comment puis-je vous aider ?
                 </p>
 
@@ -167,17 +199,19 @@ const AIChat = () => {
                       key={index}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02 }}
+                      transition={{ delay: 0.3 + index * 0.1 }}
+                      whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleSuggestionClick(suggestion)}
-                      className="bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl p-4 text-left transition group"
+                      className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl p-4 text-left transition-all duration-300 group"
                     >
                       <div className="flex items-start gap-3">
-                        <suggestion.icon className="h-6 w-6 text-purple-400 group-hover:text-purple-300 transition" />
+                        <div className="p-2 bg-purple-500/20 rounded-lg group-hover:bg-purple-500/30 transition-all">
+                          <suggestion.icon className="h-5 w-5 text-purple-400 group-hover:text-purple-300 transition" />
+                        </div>
                         <div>
-                          <p className="text-white font-medium">{suggestion.text}</p>
-                          <p className="text-gray-400 text-sm mt-1">{suggestion.category}</p>
+                          <p className="text-white font-medium mb-1">{suggestion.text}</p>
+                          <p className="text-gray-400 text-sm">{suggestion.category}</p>
                         </div>
                       </div>
                     </motion.button>
@@ -199,10 +233,10 @@ const AIChat = () => {
                   <div
                     className={`max-w-2xl px-6 py-4 rounded-2xl ${
                       message.sender === 'user'
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
                         : message.isError
-                        ? 'bg-red-500/20 text-red-200 border border-red-500/30'
-                        : 'bg-white/10 text-white border border-white/20'
+                        ? 'bg-red-500/10 text-red-200 border border-red-500/30 backdrop-blur-xl'
+                        : 'bg-white/5 text-white border border-white/10 backdrop-blur-xl hover:border-white/20 transition-all'
                     }`}
                   >
                     {message.sender === 'ai' && (
@@ -240,7 +274,7 @@ const AIChat = () => {
                 animate={{ opacity: 1 }}
                 className="flex justify-start"
               >
-                <div className="bg-white/10 border border-white/20 rounded-2xl px-6 py-4">
+                <div className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl px-6 py-4">
                   <div className="flex items-center gap-2">
                     <motion.div
                       animate={{ rotate: 360 }}
@@ -258,14 +292,14 @@ const AIChat = () => {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-white/10 p-6">
+          <div className="border-t border-white/10 p-6 bg-white/5">
             <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex gap-4">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Posez votre question sur la VAE..."
-                className="flex-1 bg-white/10 border border-white/20 rounded-full px-6 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 transition"
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-6 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 hover:border-white/20"
                 disabled={isLoading}
               />
               <motion.button
@@ -273,7 +307,7 @@ const AIChat = () => {
                 whileTap={{ scale: 0.95 }}
                 type="submit"
                 disabled={isLoading || !input.trim()}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-3 rounded-full hover:shadow-lg hover:shadow-purple-500/25 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-3 rounded-xl hover:shadow-lg hover:shadow-purple-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <PaperAirplaneIcon className="h-6 w-6" />
               </motion.button>

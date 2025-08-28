@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  AcademicCapIcon,
+  CloudArrowUpIcon,
+  DocumentTextIcon,
+  TrashIcon,
+  PlayIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
+  FolderIcon,
+  Cog6ToothIcon
+} from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function AdminUploadQuestions() {
   const [questionSets, setQuestionSets] = useState([]);
@@ -221,283 +235,438 @@ function AdminUploadQuestions() {
   };
 
   if (user && user.role !== 'admin') {
-    return <div>Accès refusé. Privilèges d'administrateur requis.</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md"
+        >
+          <div className="flex items-center gap-3 mb-6 justify-center">
+            <AcademicCapIcon className="h-10 w-10 text-purple-400" />
+            <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Lexia V4
+            </span>
+          </div>
+          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 backdrop-blur-xl">
+            <ExclamationTriangleIcon className="h-16 w-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-red-400 mb-4">Accès refusé</h2>
+            <p className="text-red-300">Privilèges d'administrateur requis.</p>
+          </div>
+        </motion.div>
+      </div>
+    );
   }
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="flex items-center gap-3 mb-6 justify-center">
+            <AcademicCapIcon className="h-10 w-10 text-purple-400" />
+            <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Lexia V4
+            </span>
+          </div>
+          <LoadingSpinner size="lg" color="primary" />
+          <p className="text-gray-300 mt-4 text-lg">Chargement...</p>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Gestion des questionnaires</h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <AcademicCapIcon className="h-10 w-10 text-purple-400" />
+            <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Lexia V4
+            </span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+            Gestion des questionnaires
+          </h1>
+          <p className="text-gray-300 text-xl">
+            Téléversez et gérez les questionnaires VAE pour les candidats
+          </p>
+        </motion.div>
       
-      {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('upload')}
-            className={`${
-              activeTab === 'upload'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-          >
-            Téléverser un questionnaire
-          </button>
-          <button
-            onClick={() => setActiveTab('manage')}
-            className={`${
-              activeTab === 'manage'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-          >
-            Gérer les questionnaires
-          </button>
-        </nav>
-      </div>
-      
-      {/* Alerts */}
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6" role="alert">
-          <p className="text-red-700">{error}</p>
-        </div>
-      )}
-
-      {success && (
-        <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6" role="alert">
-          <p className="text-green-700">{success}</p>
-        </div>
-      )}
-      
-      {/* Upload tab */}
-      {activeTab === 'upload' && (
-        <div className="bg-white shadow-sm rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Téléverser un nouveau questionnaire</h2>
-          
-          <div className="mb-6">
-            <p className="text-gray-600 mb-2">
-              Téléversez un fichier JSON contenant la structure du questionnaire. Le fichier doit respecter le format attendu.
-            </p>
-            
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4 hover:border-blue-500 transition-colors">
-              <input
-                type="file"
-                id="file-upload"
-                className="hidden"
-                onChange={handleFileChange}
-                accept=".json"
-                disabled={isUploading}
-              />
-              <label
-                htmlFor="file-upload"
-                className="cursor-pointer"
+        {/* Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8"
+        >
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 hover:border-white/20 transition-all duration-300">
+            <nav className="flex space-x-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveTab('upload')}
+                className={`${
+                  activeTab === 'upload'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                } flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all`}
               >
-                <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <p className="mt-2 text-sm text-gray-600">
-                  <span className="font-medium text-blue-600 hover:text-blue-500">
-                    Cliquez pour sélectionner un fichier
-                  </span>{' '}
-                  ou glissez-déposez
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  Fichier JSON uniquement
-                </p>
-              </label>
+                <CloudArrowUpIcon className="h-5 w-5" />
+                Téléverser un questionnaire
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveTab('manage')}
+                className={`${
+                  activeTab === 'manage'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-white/5'
+                } flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all`}
+              >
+                <Cog6ToothIcon className="h-5 w-5" />
+                Gérer les questionnaires
+              </motion.button>
+            </nav>
+          </div>
+        </motion.div>
+        
+        {/* Alerts */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl flex items-center gap-3 backdrop-blur-xl"
+            >
+              <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
+              <span className="font-medium">{error}</span>
+            </motion.div>
+          )}
+
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-6 bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-2xl flex items-center gap-3 backdrop-blur-xl"
+            >
+              <CheckCircleIcon className="h-5 w-5 flex-shrink-0" />
+              <span className="font-medium">{success}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      
+        {/* Upload tab */}
+        {activeTab === 'upload' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:border-white/20 transition-all duration-300"
+          >
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+              <CloudArrowUpIcon className="h-7 w-7 text-purple-400" />
+              Téléverser un nouveau questionnaire
+            </h2>
+            
+            <div className="mb-8">
+              <p className="text-gray-300 mb-6 text-lg leading-relaxed">
+                Téléversez un fichier JSON contenant la structure du questionnaire. Le fichier doit respecter le format attendu.
+              </p>
+              
+              <div className="border-2 border-dashed border-white/20 rounded-2xl p-8 text-center mb-6 hover:border-purple-400/50 transition-all duration-300 group bg-white/5">
+                <input
+                  type="file"
+                  id="file-upload"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  accept=".json"
+                  disabled={isUploading}
+                />
+                <label
+                  htmlFor="file-upload"
+                  className="cursor-pointer block"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="w-20 h-20 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:from-purple-500/30 group-hover:to-pink-500/30 transition-all"
+                  >
+                    <CloudArrowUpIcon className="h-10 w-10 text-purple-400 group-hover:text-purple-300 transition-colors" />
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
+                    Glissez votre fichier ici
+                  </h3>
+                  <p className="text-gray-300 text-lg mb-4">
+                    ou{' '}
+                    <span className="font-semibold text-purple-400 group-hover:text-purple-300 transition-colors">
+                      cliquez pour sélectionner
+                    </span>
+                  </p>
+                  <p className="text-gray-400">
+                    Fichier JSON uniquement
+                  </p>
+                </label>
+              </div>
+              
+              <AnimatePresence>
+                {selectedFile && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6 hover:border-white/20 transition-all"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-500/20 rounded-lg">
+                          <DocumentTextIcon className="h-6 w-6 text-purple-400" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-white">{selectedFile.name}</p>
+                          <p className="text-gray-400 text-sm">
+                            {(selectedFile.size / 1024).toFixed(2)} KB
+                          </p>
+                        </div>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        type="button"
+                        onClick={() => setSelectedFile(null)}
+                        className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                      >
+                        <XMarkIcon className="h-5 w-5" />
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             
-            {selectedFile && (
-              <div className="bg-gray-50 p-4 rounded-md mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center">
-                    <svg className="h-6 w-6 text-blue-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                    </svg>
-                    <span className="font-medium">{selectedFile.name}</span>
+            <AnimatePresence>
+              {previewData && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="mb-8"
+                >
+                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <FolderIcon className="h-6 w-6 text-purple-400" />
+                    Aperçu du questionnaire
+                  </h3>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-6 max-h-80 overflow-y-auto hover:border-white/20 transition-all">
+                    <div className="mb-4">
+                      <h4 className="text-lg font-bold text-white">{previewData.title}</h4>
+                      <p className="text-gray-300">{previewData.description || 'Aucune description'}</p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {previewData.sections && previewData.sections.map((section, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="border-l-4 border-purple-400/50 pl-4 py-2 bg-white/5 rounded-r-lg"
+                        >
+                          <p className="font-semibold text-white">{section.title}</p>
+                          <p className="text-sm text-purple-300">
+                            {section.questions?.length || 0} question(s)
+                          </p>
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedFile(null)}
-                    className="text-gray-400 hover:text-gray-500"
-                  >
-                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            <div className="flex justify-end">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={handleUpload}
+                disabled={isUploading || !selectedFile}
+                className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUploading ? (
+                  <>
+                    <LoadingSpinner size="sm" color="white" />
+                    Téléversement...
+                  </>
+                ) : (
+                  <>
+                    <CloudArrowUpIcon className="h-6 w-6" />
+                    Téléverser le questionnaire
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      
+        {/* Manage tab */}
+        {activeTab === 'manage' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all duration-300"
+          >
+            <div className="px-8 py-6 border-b border-white/10">
+              <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+                <Cog6ToothIcon className="h-7 w-7 text-purple-400" />
+                Questionnaires disponibles
+              </h3>
+              <p className="mt-2 text-gray-300 text-lg">
+                Liste des questionnaires disponibles dans le système
+              </p>
+            </div>
+            
+            {loading ? (
+              <div className="flex justify-center items-center h-32">
+                <LoadingSpinner size="lg" color="primary" />
+              </div>
+            ) : questionSets.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center py-12"
+              >
+                <div className="w-20 h-20 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <FolderIcon className="h-10 w-10 text-purple-400" />
                 </div>
-                <p className="text-sm text-gray-500">
-                  {(selectedFile.size / 1024).toFixed(2)} KB
-                </p>
+                <h3 className="text-xl font-bold text-white mb-2">Aucun questionnaire disponible</h3>
+                <p className="text-gray-300 mb-6">Commencez par téléverser votre premier questionnaire</p>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setActiveTab('upload')}
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+                >
+                  <CloudArrowUpIcon className="h-5 w-5" />
+                  Téléverser un questionnaire
+                </motion.button>
+              </motion.div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead className="bg-white/5">
+                    <tr>
+                      <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-purple-300 uppercase tracking-wider">
+                        Titre
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-purple-300 uppercase tracking-wider">
+                        Sections
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-purple-300 uppercase tracking-wider">
+                        Questions
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-purple-300 uppercase tracking-wider">
+                        Statut
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-purple-300 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-right text-sm font-bold text-purple-300 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/10">
+                    {questionSets.map((questionSet, index) => {
+                      // Count total questions
+                      let totalQuestions = 0;
+                      if (questionSet.sections) {
+                        questionSet.sections.forEach(section => {
+                          totalQuestions += section.questions?.length || 0;
+                        });
+                      }
+                      
+                      return (
+                        <motion.tr
+                          key={questionSet._id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="hover:bg-white/5 transition-all duration-200"
+                        >
+                          <td className="px-6 py-6">
+                            <div>
+                              <div className="text-lg font-semibold text-white">{questionSet.title}</div>
+                              <div className="text-gray-300">{questionSet.description || '-'}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-6 text-white font-medium">
+                            {questionSet.sections?.length || 0}
+                          </td>
+                          <td className="px-6 py-6 text-white font-medium">
+                            {totalQuestions}
+                          </td>
+                          <td className="px-6 py-6">
+                            <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-xl ${
+                              questionSet.isActive 
+                                ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                                : 'bg-gray-500/20 text-gray-300 border border-gray-500/30'
+                            }`}>
+                              {questionSet.isActive ? 'Actif' : 'Inactif'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-6 text-gray-300">
+                            {new Date(questionSet.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-6">
+                            <div className="flex justify-end gap-2">
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handleActivate(questionSet._id)}
+                                disabled={questionSet.isActive}
+                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                                  questionSet.isActive 
+                                    ? 'bg-gray-500/20 text-gray-400 cursor-not-allowed border border-gray-500/30' 
+                                    : 'bg-green-500/20 text-green-300 hover:bg-green-500/30 border border-green-500/30 hover:border-green-400/50'
+                                }`}
+                              >
+                                <PlayIcon className="h-4 w-4" />
+                                Activer
+                              </motion.button>
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handleDelete(questionSet._id)}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30 hover:border-red-400/50 transition-all"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                                Supprimer
+                              </motion.button>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
-          </div>
-          
-          {previewData && (
-            <div className="mb-6">
-              <h3 className="text-md font-medium text-gray-900 mb-2">Aperçu du questionnaire</h3>
-              <div className="bg-gray-50 p-4 rounded-md max-h-60 overflow-y-auto">
-                <p className="font-medium">{previewData.title}</p>
-                <p className="text-gray-500 text-sm mb-2">{previewData.description || 'Aucune description'}</p>
-                
-                <ul className="space-y-2">
-                  {previewData.sections && previewData.sections.map((section, index) => (
-                    <li key={index} className="border-l-2 border-blue-300 pl-3">
-                      <p className="font-medium">{section.title}</p>
-                      <p className="text-xs text-gray-500 mb-1">{section.questions?.length || 0} question(s)</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-          
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleUpload}
-              disabled={isUploading || !selectedFile}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed"
-            >
-              {isUploading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Téléversement...
-                </>
-              ) : (
-                'Téléverser le questionnaire'
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {/* Manage tab */}
-      {activeTab === 'manage' && (
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Questionnaires disponibles</h3>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">
-              Liste des questionnaires disponibles dans le système
-            </p>
-          </div>
-          
-          {loading ? (
-            <div className="flex justify-center items-center h-32">
-              <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </div>
-          ) : questionSets.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">Aucun questionnaire disponible</p>
-              <button
-                onClick={() => setActiveTab('upload')}
-                className="mt-2 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Téléverser un questionnaire
-              </button>
-            </div>
-          ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Titre
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sections
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Questions
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Statut
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {questionSets.map((questionSet) => {
-                  // Count total questions
-                  let totalQuestions = 0;
-                  if (questionSet.sections) {
-                    questionSet.sections.forEach(section => {
-                      totalQuestions += section.questions?.length || 0;
-                    });
-                  }
-                  
-                  return (
-                    <tr key={questionSet._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{questionSet.title}</div>
-                        <div className="text-sm text-gray-500">{questionSet.description || '-'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {questionSet.sections?.length || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {totalQuestions}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          questionSet.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {questionSet.isActive ? 'Actif' : 'Inactif'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(questionSet.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
-                          <button
-                            onClick={() => handleActivate(questionSet._id)}
-                            disabled={questionSet.isActive}
-                            className={`text-xs px-2 py-1 rounded ${
-                              questionSet.isActive 
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                            }`}
-                          >
-                            Activer
-                          </button>
-                          <button
-                            onClick={() => handleDelete(questionSet._id)}
-                            className="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200"
-                          >
-                            Supprimer
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </div>
     </div>
-  );
 }
 
 export default AdminUploadQuestions; 

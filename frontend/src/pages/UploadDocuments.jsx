@@ -1,6 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  CloudArrowUpIcon,
+  DocumentTextIcon,
+  PhotoIcon,
+  TrashIcon,
+  ArrowDownTrayIcon,
+  XMarkIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  AcademicCapIcon,
+  FolderIcon,
+  DocumentIcon
+} from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function UploadDocuments() {
   const [files, setFiles] = useState([]);
@@ -154,23 +171,11 @@ function UploadDocuments() {
     const extension = file.name.split('.').pop().toLowerCase();
     
     if (extension === 'pdf') {
-      return (
-        <svg className="w-10 h-10 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12.5 2H7.174a2 2 0 00-1.414.586L3.586 4.76A2 2 0 003 6.174V18.5a2 2 0 002 2h14a2 2 0 002-2v-14a2 2 0 00-2-2h-6.5zM14 18v-2h-4v2h4zm0-4h4v-1h-8v1h4zm0-3h4V8h-8v3h4z" />
-        </svg>
-      );
+      return <DocumentTextIcon className="w-10 h-10 text-red-400" />;
     } else if (['jpg', 'jpeg', 'png'].includes(extension)) {
-      return (
-        <svg className="w-10 h-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M20 5h-3.2L15 3H9L7.2 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 14h-16V7h4.1l1.8-2h4.2l1.8 2H20v12zm-5-7c0 2.8-2.2 5-5 5s-5-2.2-5-5 2.2-5 5-5 5 2.2 5 5zm-9 0c0 2.2 1.8 4 4 4s4-1.8 4-4-1.8-4-4-4-4 1.8-4 4z" />
-        </svg>
-      );
+      return <PhotoIcon className="w-10 h-10 text-blue-400" />;
     } else {
-      return (
-        <svg className="w-10 h-10 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
-        </svg>
-      );
+      return <DocumentIcon className="w-10 h-10 text-gray-400" />;
     }
   };
 
@@ -204,59 +209,108 @@ function UploadDocuments() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="px-6 py-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Documents à l'appui de votre dossier VAE</h1>
-          <p className="text-gray-600 mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <AcademicCapIcon className="h-10 w-10 text-purple-400" />
+            <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Lexia V4
+            </span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+            Documents VAE
+          </h1>
+          <p className="text-gray-300 text-xl max-w-3xl">
             Téléversez vos CV, attestations, certificats ou autres documents qui serviront de base à votre dossier.
           </p>
+        </motion.div>
 
-          {/* Progress indicators */}
-          <div className="mb-8">
-            <div className="flex justify-between items-center mb-2">
+        {/* Progress indicators */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8"
+        >
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300">
+            <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg"
+                >
                   1
-                </div>
-                <span className="ml-2 text-blue-600 font-medium">Documents</span>
+                </motion.div>
+                <span className="ml-3 text-white font-semibold text-lg">Documents</span>
               </div>
-              <div className="flex-grow mx-4 h-1 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 w-1/3" />
+              <div className="flex-grow mx-6 h-2 bg-white/10 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: '33%' }}
+                  transition={{ duration: 1, delay: 0.5 }}
+                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+                />
               </div>
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
+                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-gray-400 font-bold text-lg border border-white/20">
                   2
                 </div>
-                <span className="ml-2 text-gray-500">Questions</span>
+                <span className="ml-3 text-gray-400 font-semibold text-lg">Questions</span>
               </div>
-              <div className="flex-grow mx-4 h-1 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-gray-300 w-0" />
+              <div className="flex-grow mx-6 h-2 bg-white/10 rounded-full">
+                <div className="h-full bg-gray-400 w-0" />
               </div>
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
+                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-gray-400 font-bold text-lg border border-white/20">
                   3
                 </div>
-                <span className="ml-2 text-gray-500">Dossier</span>
+                <span className="ml-3 text-gray-400 font-semibold text-lg">Dossier</span>
               </div>
             </div>
           </div>
+        </motion.div>
 
-          {/* Alerts */}
+        {/* Alerts */}
+        <AnimatePresence>
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6" role="alert">
-              <p className="text-red-700">{error}</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl flex items-center gap-3 backdrop-blur-xl"
+            >
+              <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
+              <span className="font-medium">{error}</span>
+            </motion.div>
           )}
 
           {success && (
-            <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6" role="alert">
-              <p className="text-green-700">{success}</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-6 bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-2xl flex items-center gap-3 backdrop-blur-xl"
+            >
+              <CheckCircleIcon className="h-5 w-5 flex-shrink-0" />
+              <span className="font-medium">{success}</span>
+            </motion.div>
           )}
+        </AnimatePresence>
 
-          {/* Upload area */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-8 hover:border-blue-500 transition-colors">
+        {/* Upload area */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 mb-8 hover:border-white/20 transition-all duration-300"
+        >
+          <div className="border-2 border-dashed border-white/20 rounded-2xl p-8 text-center hover:border-purple-400/50 transition-all duration-300 group">
             <input
               type="file"
               id="file-upload"
@@ -268,163 +322,223 @@ function UploadDocuments() {
             />
             <label
               htmlFor="file-upload"
-              className="cursor-pointer"
+              className="cursor-pointer block"
             >
-              <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <p className="mt-2 text-sm text-gray-600">
-                <span className="font-medium text-blue-600 hover:text-blue-500">
-                  Cliquez pour sélectionner des fichiers
-                </span>{' '}
-                ou glissez-déposez
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="w-20 h-20 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:from-purple-500/30 group-hover:to-pink-500/30 transition-all"
+              >
+                <CloudArrowUpIcon className="h-10 w-10 text-purple-400 group-hover:text-purple-300 transition-colors" />
+              </motion.div>
+              <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
+                Glissez vos fichiers ici
+              </h3>
+              <p className="text-gray-300 text-lg mb-4">
+                ou{' '}
+                <span className="font-semibold text-purple-400 group-hover:text-purple-300 transition-colors">
+                  cliquez pour sélectionner
+                </span>
               </p>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="text-gray-400">
                 PDF, JPG, PNG jusqu'à 10MB
               </p>
             </label>
           </div>
+        </motion.div>
 
-          {/* Selected files list */}
+        {/* Selected files list */}
+        <AnimatePresence>
           {files.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Fichiers à téléverser</h3>
-              <ul className="divide-y divide-gray-200 border border-gray-200 rounded-md">
-                {files.map((file, index) => (
-                  <li key={index} className="px-4 py-3 flex items-center justify-between">
-                    <div className="flex items-center">
-                      {getFileIcon(file)}
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-900 truncate" style={{maxWidth: '250px'}}>
-                          {file.name}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      {uploadProgress[index] !== undefined && (
-                        <div className="w-24 bg-gray-200 rounded-full h-2.5 mr-4">
-                          <div
-                            className="bg-blue-600 h-2.5 rounded-full"
-                            style={{ width: `${uploadProgress[index]}%` }}
-                          ></div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-8"
+            >
+              <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                <FolderIcon className="h-6 w-6 text-purple-400" />
+                Fichiers à téléverser
+              </h3>
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300">
+                <div className="space-y-4">
+                  {files.map((file, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:border-white/20 transition-all group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-purple-500/20 rounded-lg group-hover:bg-purple-500/30 transition-all">
+                          {getFileIcon(file)}
                         </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeFile(index)}
-                        className="ml-2 text-gray-400 hover:text-gray-500"
-                        disabled={isUploading}
-                      >
-                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-4">
-                <button
-                  type="button"
-                  onClick={uploadFiles}
-                  disabled={isUploading}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed"
-                >
-                  {isUploading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Téléversement...
-                    </>
-                  ) : (
-                    'Téléverser les fichiers'
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Already uploaded files */}
-          {uploadedFiles.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Documents téléversés</h3>
-              <ul className="divide-y divide-gray-200 border border-gray-200 rounded-md">
-                {uploadedFiles.map((file) => (
-                  <li key={file._id} className="px-4 py-3 flex items-center justify-between">
-                    <div className="flex items-center">
-                      {file.extension === 'pdf' ? (
-                        <svg className="w-10 h-10 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M12.5 2H7.174a2 2 0 00-1.414.586L3.586 4.76A2 2 0 003 6.174V18.5a2 2 0 002 2h14a2 2 0 002-2v-14a2 2 0 00-2-2h-6.5zM14 18v-2h-4v2h4zm0-4h4v-1h-8v1h4zm0-3h4V8h-8v3h4z" />
-                        </svg>
-                      ) : (
-                        <svg className="w-10 h-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M20 5h-3.2L15 3H9L7.2 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 14h-16V7h4.1l1.8-2h4.2l1.8 2H20v12zm-5-7c0 2.8-2.2 5-5 5s-5-2.2-5-5 2.2-5 5-5 5 2.2 5 5zm-9 0c0 2.2 1.8 4 4 4s4-1.8 4-4-1.8-4-4-4-4 1.8-4 4z" />
-                        </svg>
-                      )}
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-900 truncate" style={{maxWidth: '250px'}}>
-                          {file.originalName}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(file.createdAt).toLocaleDateString()}
-                        </p>
+                        <div className="flex-grow">
+                          <p className="font-semibold text-white truncate max-w-xs">
+                            {file.name}
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <a
-                        href={`/api/uploads/${file._id}/download`}
-                        className="text-blue-600 hover:text-blue-800"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() => deleteUploadedFile(file._id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                      <div className="flex items-center gap-4">
+                        {uploadProgress[index] !== undefined && (
+                          <div className="w-32">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs text-gray-400">{uploadProgress[index]}%</span>
+                            </div>
+                            <div className="w-full bg-white/10 rounded-full h-2">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${uploadProgress[index]}%` }}
+                                className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all"
+                              />
+                            </div>
+                          </div>
+                        )}
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          type="button"
+                          onClick={() => removeFile(index)}
+                          disabled={isUploading}
+                          className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all disabled:opacity-50"
+                        >
+                          <XMarkIcon className="h-5 w-5" />
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+                <div className="mt-6">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    onClick={uploadFiles}
+                    disabled={isUploading}
+                    className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUploading ? (
+                      <>
+                        <LoadingSpinner size="sm" color="white" />
+                        Téléversement...
+                      </>
+                    ) : (
+                      <>
+                        <CloudArrowUpIcon className="h-6 w-6" />
+                        Téléverser les fichiers
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
           )}
+        </AnimatePresence>
 
-          {/* Actions */}
-          <div className="flex justify-between border-t border-gray-200 pt-6">
+        {/* Already uploaded files */}
+        <AnimatePresence>
+          {uploadedFiles.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mb-8"
+            >
+              <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                <CheckCircleIcon className="h-6 w-6 text-green-400" />
+                Documents téléversés
+              </h3>
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300">
+                <div className="space-y-4">
+                  {uploadedFiles.map((file, index) => (
+                    <motion.div
+                      key={file._id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:border-white/20 transition-all group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-green-500/20 rounded-lg group-hover:bg-green-500/30 transition-all">
+                          {file.extension === 'pdf' ? (
+                            <DocumentTextIcon className="w-10 h-10 text-red-400" />
+                          ) : (
+                            <PhotoIcon className="w-10 h-10 text-blue-400" />
+                          )}
+                        </div>
+                        <div className="flex-grow">
+                          <p className="font-semibold text-white truncate max-w-xs">
+                            {file.originalName}
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            {new Date(file.createdAt).toLocaleDateString('fr-FR')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <motion.a
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          href={`/api/uploads/${file._id}/download`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all"
+                          title="Télécharger"
+                        >
+                          <ArrowDownTrayIcon className="h-5 w-5" />
+                        </motion.a>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          type="button"
+                          onClick={() => deleteUploadedFile(file._id)}
+                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
+                          title="Supprimer"
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="flex flex-col sm:flex-row justify-between gap-6 pt-8 border-t border-white/10"
+        >
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
             <Link
               to="/"
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center gap-3 bg-white/10 border border-white/20 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 transition-all"
             >
-              <svg className="mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-              </svg>
+              <ArrowLeftIcon className="h-6 w-6" />
               Retour
             </Link>
-            <button
-              type="button"
-              onClick={handleContinue}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Continuer
-              <svg className="ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
+          </motion.div>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="button"
+            onClick={handleContinue}
+            className="inline-flex items-center gap-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all"
+          >
+            Continuer
+            <ArrowRightIcon className="h-6 w-6" />
+          </motion.button>
+        </motion.div>
       </div>
     </div>
   );
