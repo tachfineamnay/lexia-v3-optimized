@@ -1,18 +1,34 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  SparklesIcon, 
-  AcademicCapIcon, 
+import {
+  SparklesIcon,
+  AcademicCapIcon,
   ChatBubbleBottomCenterTextIcon,
   ChartBarIcon,
   ShieldCheckIcon,
-  RocketLaunchIcon,
+  ArrowRightIcon,
   StarIcon,
-  ArrowRightIcon
+  CheckIcon,
+  PlayIcon,
+  RocketLaunchIcon
 } from '@heroicons/react/24/outline';
 
 const Landing = () => {
+  const fadeInUp = {
+    initial: { opacity: 0, y: 60 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6, ease: [0.6, -0.05, 0.01, 0.99] }
+  };
+
+  const stagger = {
+    animate: {
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
   const features = [
     {
       icon: SparklesIcon,
@@ -40,6 +56,13 @@ const Landing = () => {
     }
   ];
 
+  const benefits = [
+    "Réduction du temps de préparation de 60%",
+    "Taux de réussite de 95% avec notre accompagnement",
+    "Support personnalisé par IA avancée",
+    "Interface intuitive et moderne"
+  ];
+
   const testimonials = [
     {
       name: "Marie L.",
@@ -62,40 +85,40 @@ const Landing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-black/20 backdrop-blur-lg z-50 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <motion.div 
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      {/* Header */}
+      <header className="relative z-50">
+        <nav className="container mx-auto px-6">
+          <div className="flex items-center justify-between h-20">
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center space-x-2"
+              transition={{ duration: 0.5 }}
+              className="flex items-center gap-3"
             >
-              <AcademicCapIcon className="h-6 w-6 text-purple-400" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Lexia V4
-              </span>
+              <AcademicCapIcon className="h-8 w-8 text-purple-400" />
+              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Lexia V4</span>
             </motion.div>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center space-x-4"
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="flex items-center gap-4"
             >
-              <Link to="/login" className="text-white/80 hover:text-white transition">
+              <Link to="/login" className="text-gray-300 hover:text-white transition-colors font-medium">
                 Connexion
               </Link>
               <Link 
                 to="/register" 
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full hover:shadow-lg hover:shadow-purple-500/25 transition"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full font-semibold hover:shadow-lg hover:shadow-purple-500/25 transition"
               >
                 Commencer
               </Link>
             </motion.div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </header>
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4">

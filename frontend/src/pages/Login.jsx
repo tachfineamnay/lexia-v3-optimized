@@ -1,10 +1,20 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
+import LoadingSpinner from '../components/LoadingSpinner';
+import {
+  EyeIcon,
+  EyeSlashIcon,
+  AcademicCapIcon,
+  EnvelopeIcon,
+  LockClosedIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline';
 
 /**
- * Composant de connexion
- * Gère le formulaire de connexion et la vérification d'email
+ * Composant de connexion moderne
+ * Interface repensée avec animations et design moderne
  */
 function Login() {
   const [formData, setFormData] = useState({
@@ -13,6 +23,7 @@ function Login() {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -72,96 +83,188 @@ function Login() {
     }
   };
 
+  const pageVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 }
+  };
+
+  const containerVariants = {
+    initial: { opacity: 0, scale: 0.95 },
+    animate: { 
+      opacity: 1, 
+      scale: 1,
+      transition: {
+        duration: 0.3,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
-    <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-8 mt-10">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-800">Connexion à LexiaV3</h2>
-        <p className="mt-2 text-gray-600">Accédez à votre espace personnel</p>
-      </div>
-      
-      {errors.auth && (
-        <div className="bg-red-50 text-red-700 p-3 rounded mb-4" role="alert">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm">{errors.auth}</p>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      <form onSubmit={handleSubmit} noValidate>
-        <div className="mb-4">
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.email ? 'border-red-500' : 'border-gray-300'
-            }`}
-            placeholder="votre@email.com"
-            autoComplete="email"
-          />
-          {errors.email && (
-            <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-          )}
-        </div>
-        
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-1">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Mot de passe
-            </label>
-            <Link
-              to="/forgot-password"
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              Mot de passe oublié ?
-            </Link>
-          </div>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.password ? 'border-red-500' : 'border-gray-300'
-            }`}
-            placeholder="••••••••"
-            autoComplete="current-password"
-          />
-          {errors.password && (
-            <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-          )}
-        </div>
-        
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center px-4">
+      <motion.div
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
+      >
+        {/* Header */}
+        <motion.div
+          variants={containerVariants}
+          className="text-center mb-8"
         >
-          {isSubmitting ? 'Connexion en cours...' : 'Se connecter'}
-        </button>
-      </form>
-      
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600">
-          Vous n'avez pas de compte ?{' '}
-          <Link to="/register" className="text-blue-600 hover:text-blue-800 font-medium">
-            S'inscrire
+          <Link to="/" className="inline-flex items-center gap-3 mb-6">
+            <AcademicCapIcon className="h-10 w-10 text-purple-400" />
+            <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Lexia V4
+            </span>
           </Link>
-        </p>
-      </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Bon retour !</h1>
+          <p className="text-gray-400">Connectez-vous à votre compte</p>
+        </motion.div>
+
+        {/* Form Container */}
+        <motion.div
+          variants={containerVariants}
+          className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 shadow-2xl"
+        >
+          {/* Error Alert */}
+          {errors.auth && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6"
+              role="alert"
+            >
+              <div className="flex items-start gap-3">
+                <ExclamationTriangleIcon className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm leading-relaxed">{errors.auth}</p>
+              </div>
+            </motion.div>
+          )}
+          
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
+            {/* Email Field */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                Adresse email
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <EnvelopeIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 ${
+                    errors.email ? 'border-red-500 focus:ring-red-500' : 'border-white/10 hover:border-white/20'
+                  }`}
+                  placeholder="votre@email.com"
+                  autoComplete="email"
+                />
+              </div>
+              {errors.email && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm text-red-400"
+                >
+                  {errors.email}
+                </motion.p>
+              )}
+            </div>
+            
+            {/* Password Field */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                  Mot de passe
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  Oublié ?
+                </Link>
+              </div>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <LockClosedIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-12 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 ${
+                    errors.password ? 'border-red-500 focus:ring-red-500' : 'border-white/10 hover:border-white/20'
+                  }`}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+              {errors.password && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm text-red-400"
+                >
+                  {errors.password}
+                </motion.p>
+              )}
+            </div>
+            
+            {/* Submit Button */}
+            <motion.button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent transition disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+              whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center justify-center gap-2">
+                  <LoadingSpinner size="sm" color="white" />
+                  <span>Connexion...</span>
+                </div>
+              ) : (
+                'Se connecter'
+              )}
+            </motion.button>
+          </form>
+          
+          {/* Register Link */}
+          <div className="mt-8 text-center">
+            <p className="text-gray-400">
+              Pas encore de compte ?{' '}
+              <Link 
+                to="/register" 
+                className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+              >
+                Créer un compte
+              </Link>
+            </p>
+          </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

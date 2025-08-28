@@ -1,159 +1,236 @@
-import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import Navbar from './components/Navbar';
-
-// Pages
-import Landing from './pages/Landing';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import EmailConfirmation from './pages/EmailConfirmation';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import Dashboard from './pages/Dashboard';
-import Documents from './pages/Documents';
-import Profile from './pages/Profile';
-import UploadDocuments from './pages/UploadDocuments';
-import QuestionFlow from './pages/QuestionFlow';
-import FinalDossier from './pages/FinalDossier';
-import AdminUploadQuestions from './pages/AdminUploadQuestions';
-import NotFound from './pages/NotFound';
-import VAECreation from './pages/VAECreation';
-import AdminConfig from './pages/AdminConfig';
-import AdminDashboard from './pages/AdminDashboard';
-
+import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ToastProvider } from './hooks/useToast';
 
-// import './styles/lexia-design-system.css';
+// Layout Components
+import Navbar from './components/Navbar';
+import LoadingSpinner from './components/LoadingSpinner';
 
-// Protected route component
+// Public Pages
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import EmailConfirmation from './pages/EmailConfirmation';
+import NotFound from './pages/NotFound';
+
+// Protected Pages
+import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
+import Documents from './pages/Documents';
+import AIChat from './pages/AIChat';
+import UploadDocuments from './pages/UploadDocuments';
+import QuestionFlow from './pages/QuestionFlow';
+import FinalDossier from './pages/FinalDossier';
+import VAECreation from './pages/VAECreation';
+
+// Admin Pages
+import AdminDashboard from './pages/AdminDashboard';
+import AdminUploadQuestions from './pages/AdminUploadQuestions';
+import AdminConfig from './pages/AdminConfig';
+
+// Page transition variants
+const pageVariants = {
+  initial: {
+    opacity: 0,
+    y: 20,
+  },
+  in: {
+    opacity: 1,
+    y: 0,
+  },
+  out: {
+    opacity: 0,
+    y: -20,
+  },
+};
+
+const pageTransition = {
+  type: 'tween',
+  ease: 'anticipate',
+  duration: 0.3,
+};
+
+// Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex-center">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
   
   return children;
 };
 
-// Admin route component
+// Admin Route Component
 const AdminRoute = ({ children }) => {
   const { isAuthenticated, loading, user } = useAuth();
   
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex-center">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
   
-  if (user.role !== 'admin') {
-    return <Navigate to="/" />;
+  if (user?.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
   }
   
   return children;
 };
 
-function AppContent() {
+// Main App Content
+const AppContent = () => {
   const location = useLocation();
   const isLandingPage = location.pathname === '/';
   
   return (
-    <div className={isLandingPage ? "min-h-screen" : "min-h-screen bg-gray-50 dark:bg-gray-900"}>
+    <div className="min-h-screen bg-neutral-50">
+      {/* Navigation - Hidden on landing page */}
       {!isLandingPage && <Navbar />}
-      <main className={isLandingPage ? "" : "container mx-auto px-4 py-8"}>
-            <Routes>
-              {/* Public routes */}
+      
+      {/* Main Content */}
+      <main className={isLandingPage ? '' : 'pt-16'}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            <Routes location={location}>
+              {/* Public Routes */}
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/verify-email/:token" element={<EmailConfirmation />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route path="/verify-email/:token" element={<EmailConfirmation />} />
               
-              {/* Protected routes */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/documents" element={
-                <ProtectedRoute>
-                  <Documents />
-                </ProtectedRoute>
-              } />
-              {/* Redirection pour les anciennes routes de documents */}
-              <Route path="/documents/new" element={<Navigate to="/upload-documents" />} />
-              <Route path="/documents/:id" element={<Navigate to="/documents" />} />
-              
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
+              {/* Protected Routes */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents"
+                element={
+                  <ProtectedRoute>
+                    <Documents />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/chat"
+                element={
+                  <ProtectedRoute>
+                    <AIChat />
+                  </ProtectedRoute>
+                }
+              />
               
               {/* VAE Process Routes */}
-              <Route path="/upload-documents" element={
-                <ProtectedRoute>
-                  <UploadDocuments />
-                </ProtectedRoute>
-              } />
-              <Route path="/question-flow" element={
-                <ProtectedRoute>
-                  <QuestionFlow />
-                </ProtectedRoute>
-              } />
-              <Route path="/final-dossier" element={
-                <ProtectedRoute>
-                  <FinalDossier />
-                </ProtectedRoute>
-              } />
-              <Route path="/vae-creation" element={
-                <ProtectedRoute>
-                  <VAECreation />
-                </ProtectedRoute>
-              } />
+              <Route
+                path="/upload-documents"
+                element={
+                  <ProtectedRoute>
+                    <UploadDocuments />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/question-flow"
+                element={
+                  <ProtectedRoute>
+                    <QuestionFlow />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/final-dossier"
+                element={
+                  <ProtectedRoute>
+                    <FinalDossier />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/vae-creation"
+                element={
+                  <ProtectedRoute>
+                    <VAECreation />
+                  </ProtectedRoute>
+                }
+              />
               
-              {/* Admin routes */}
-              <Route path="/admin" element={
-                <AdminRoute>
-                  <AdminDashboard />
-                </AdminRoute>
-              } />
-              <Route path="/admin/questions" element={
-                <AdminRoute>
-                  <AdminUploadQuestions />
-                </AdminRoute>
-              } />
-              <Route path="/admin/config" element={
-                <AdminRoute>
-                  <AdminConfig />
-                </AdminRoute>
-              } />
+              {/* Admin Routes */}
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/questions"
+                element={
+                  <AdminRoute>
+                    <AdminUploadQuestions />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/config"
+                element={
+                  <AdminRoute>
+                    <AdminConfig />
+                  </AdminRoute>
+                }
+              />
               
-              {/* 404 route */}
+              {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </main>
-        </div>
+          </motion.div>
+        </AnimatePresence>
+      </main>
+    </div>
   );
-}
+};
 
-function App() {
+// Main App Component
+const App = () => {
   return (
     <ToastProvider>
       <AuthProvider>
@@ -161,6 +238,6 @@ function App() {
       </AuthProvider>
     </ToastProvider>
   );
-}
+};
 
 export default App; 
