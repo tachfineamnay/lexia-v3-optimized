@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const VAE = require('../models/VAE');
-const User = require('../models/User');
+const Dossier = require('../models/dossier');
+const User = require('../models/user');
 
 // Obtenir les statistiques du dashboard
 router.get('/stats', auth, async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Compter les VAE par statut
+    // Compter les dossiers par statut
     const [totalVAE, completedVAE, inProgressVAE] = await Promise.all([
-      VAE.countDocuments({ user: userId }),
-      VAE.countDocuments({ user: userId, status: 'completed' }),
-      VAE.countDocuments({ user: userId, status: 'in_progress' })
+      Dossier.countDocuments({ user: userId }),
+      Dossier.countDocuments({ user: userId, status: 'completed' }),
+      Dossier.countDocuments({ user: userId, status: 'in_progress' })
     ]);
 
     // Calculer le taux de complétion
@@ -39,8 +39,8 @@ router.get('/activity', auth, async (req, res) => {
     const userId = req.user.id;
     const limit = parseInt(req.query.limit) || 10;
 
-    // Récupérer les VAE récemment modifiées
-    const recentVAE = await VAE.find({ user: userId })
+    // Récupérer les dossiers récemment modifiés
+    const recentVAE = await Dossier.find({ user: userId })
       .sort({ updatedAt: -1 })
       .limit(limit)
       .select('title status updatedAt progress');
@@ -68,8 +68,8 @@ router.get('/insights', auth, async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Récupérer les VAE de l'utilisateur
-    const userVAEs = await VAE.find({ user: userId })
+    // Récupérer les dossiers de l'utilisateur
+    const userVAEs = await Dossier.find({ user: userId })
       .select('status progress createdAt updatedAt');
 
     // Calculer les insights

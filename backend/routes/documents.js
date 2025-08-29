@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Document = require('../models/document');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const Dossier = require('../models/dossier');
 const documentGenerator = require('../services/documentGenerator');
 const { logger } = require('../utils/logger');
@@ -152,7 +151,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 });
 
 // Générer un document VAE
-router.post('/generate/:dossierId', isAuthenticated, async (req, res) => {
+router.post('/generate/:dossierId', authMiddleware, async (req, res) => {
   const operationId = logger.startOperation('generate_dossier_document');
   
   try {
