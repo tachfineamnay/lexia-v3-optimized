@@ -12,7 +12,6 @@ const QuestionSet = require('../models/questionSet');
 const Dossier = require('../models/dossier');
 const { OpenAI } = require('openai');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const Anthropic = require('@anthropic-ai/sdk');
 
 // Configuration des clients IA
 const openai = new OpenAI({
@@ -20,9 +19,6 @@ const openai = new OpenAI({
 });
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
-});
 
 // Extract text from file based on file type
 async function extractTextFromFile(filePath, fileType) {
