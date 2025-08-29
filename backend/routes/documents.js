@@ -219,7 +219,7 @@ router.post('/generate/:dossierId', authMiddleware, async (req, res) => {
 });
 
 // Télécharger un document VAE
-router.get('/download/:dossierId', isAuthenticated, async (req, res) => {
+router.get('/download/:dossierId', authMiddleware, async (req, res) => {
   const operationId = logger.startOperation('download_dossier_document');
   
   try {

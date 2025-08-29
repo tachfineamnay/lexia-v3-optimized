@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const Dossier = require('../models/dossier');
 const User = require('../models/user');
 
 // Obtenir les statistiques du dashboard
-router.get('/stats', auth, async (req, res) => {
+router.get('/stats', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -34,7 +34,7 @@ router.get('/stats', auth, async (req, res) => {
 });
 
 // Obtenir l'activité récente
-router.get('/activity', auth, async (req, res) => {
+router.get('/activity', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
     const limit = parseInt(req.query.limit) || 10;
@@ -64,7 +64,7 @@ router.get('/activity', auth, async (req, res) => {
 });
 
 // Obtenir les insights IA
-router.get('/insights', auth, async (req, res) => {
+router.get('/insights', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
 
