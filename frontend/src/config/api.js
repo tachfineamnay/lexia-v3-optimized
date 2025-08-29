@@ -6,7 +6,12 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 // Enlever le slash final s'il existe
 const API_BASE_URL = API_URL.replace(/\/$/, '');
 
-console.log('🔗 API Base URL:', API_BASE_URL); // Debug log
+// Logs de debug plus détaillés
+console.log('🔗 Configuration API:');
+console.log('  - VITE_API_URL:', import.meta.env.VITE_API_URL);
+console.log('  - API_BASE_URL:', API_BASE_URL);
+console.log('  - Environment:', import.meta.env.MODE);
+console.log('  - Base URL complète:', `${API_BASE_URL}/api`);
 
 // Create axios instance
 const api = axios.create({
