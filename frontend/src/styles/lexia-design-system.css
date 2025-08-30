@@ -280,36 +280,6 @@
   box-shadow: var(--shadow-lg);
 }
 
-/* Boutons avec bon contraste */
-.lexia-btn {
-  padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  transition: all var(--transition-base);
-  cursor: pointer;
-  border: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.lexia-btn-primary {
-  background: var(--lexia-blue);
-  color: var(--lexia-white);
-}
-
-.lexia-btn-primary:hover {
-  background: #2563EB;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.lexia-btn-secondary {
-  background: var(--lexia-gray-100);
-  color: var(--lexia-gray-700);
-  border: 1px solid var(--lexia-gray-300);
-}
-
 /* Progress indicator avec gradient coloré */
 .lexia-progress-bar {
   @apply w-full h-2 bg-gray-200 rounded-full overflow-hidden;
