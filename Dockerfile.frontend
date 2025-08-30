@@ -1,6 +1,3 @@
-# This Dockerfile uses a multi-stage build to create an optimized production image.
-# It requires VITE_API_URL to be passed as a build argument.
-#
 # Multi-stage build for React frontend
 FROM node:18-alpine AS builder
 
