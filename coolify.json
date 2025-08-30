@@ -7,7 +7,7 @@
   "domains": [
     {
       "name": "frontend",
-      "port": 3000,
+      "port": 8083,
       "type": "http"
     },
     {
