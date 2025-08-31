@@ -7,7 +7,7 @@ const { authMiddleware } = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
 const QuestionSet = require('../models/questionSet');
 const Document = require('../models/document');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 
 // Configuration du stockage pour les uploads JSON
 const storage = multer.diskStorage({
@@ -44,7 +44,11 @@ const upload = multer({
  * @desc    Importer un ensemble de questions depuis un fichier JSON
  * @access  Admin
  */
-router.post('/upload', authMiddleware, adminAuth, upload.single('file'), async (req, res) => {
+// Note: place upload middleware before adminAuth so the multipart body
+// is consumed even if adminAuth rejects the request. This avoids
+// connection reset errors when the client is still streaming the file.
+// Place the upload middleware first so request body is consumed even if auth fails
+router.post('/upload', upload.single('file'), authMiddleware, adminAuth, async (req, res) => {
   const operationId = logger.startOperation('upload_question_set');
   
   try {
@@ -60,21 +64,39 @@ router.post('/upload', authMiddleware, adminAuth, upload.single('file'), async (
     let questionsData;
     
     try {
+      // Attempt to parse JSON
       questionsData = JSON.parse(fileContent);
     } catch (parseError) {
       // Supprimer le fichier en cas d'erreur de parsing
       fs.unlinkSync(req.file.path);
-      
+
       logger.logError('JSON parsing error', {
         operationId,
         error: parseError.message,
         filePath: req.file.path
       });
-      
+
       return res.status(400).json({
         success: false,
         message: 'Format JSON invalide',
         error: parseError.message
+      });
+    }
+
+    // Ensure parsed content is an object with expected structure
+    if (!questionsData || typeof questionsData !== 'object' || Array.isArray(questionsData)) {
+      fs.unlinkSync(req.file.path);
+      logger.logError('Question set validation failed', {
+        operationId,
+        error: 'Parsed JSON is not a valid object',
+        filePath: req.file.path
+      });
+
+      // For primitive JSON values we return a format error to match test expectations
+      return res.status(400).json({
+        success: false,
+        message: 'Format JSON invalide',
+        error: 'Parsed JSON must be an object'
       });
     }
     
@@ -186,8 +208,8 @@ router.post('/upload', authMiddleware, adminAuth, upload.single('file'), async (
     
     res.status(500).json({
       success: false,
-      message: 'Erreur lors de l\'importation des questions',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: 'Erreur lors de l\'importation des questions',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -203,40 +225,43 @@ router.get('/', authMiddleware, async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 10, 50);
     const skip = (page - 1) * limit;
-    
+
     // Construire le filtre
     const filter = {};
-    
+
     // Filtre par certification cible
     if (req.query.certification) {
       filter.targetCertification = { $regex: req.query.certification, $options: 'i' };
     }
-    
+
     // Filtre par niveau
     if (req.query.level) {
       filter.certificationLevel = { $regex: req.query.level, $options: 'i' };
     }
-    
+
     // Filtre actif/inactif (admin seulement)
-    if (req.query.active !== undefined && req.user.role === 'admin') {
+    if (req.query.active !== undefined && req.user && req.user.role === 'admin') {
       filter.isActive = req.query.active === 'true';
     } else {
       // Les utilisateurs normaux ne voient que les ensembles actifs
       filter.isActive = true;
     }
-    
-    // Recherche textuelle
+
+    // Recherche textuelle (mot entier) - éviter que 'Inactive' corresponde à 'Active'
     if (req.query.search) {
+      const escapeRegExp = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const term = escapeRegExp(req.query.search.trim());
+      const regex = new RegExp(`\\b${term}\\b`, 'i');
       filter.$or = [
-        { title: { $regex: req.query.search, $options: 'i' } },
-        { description: { $regex: req.query.search, $options: 'i' } },
-        { targetCertification: { $regex: req.query.search, $options: 'i' } }
+        { title: regex },
+        { description: regex },
+        { targetCertification: regex }
       ];
     }
-    
+
     // Compter le total pour la pagination
     const total = await QuestionSet.countDocuments(filter);
-    
+
     // Récupérer les ensembles de questions
     const questionSets = await QuestionSet.find(filter)
       .select('-sections.questions') // Exclure les questions détaillées pour alléger
@@ -245,7 +270,7 @@ router.get('/', authMiddleware, async (req, res) => {
       .limit(limit)
       .populate('createdBy', 'firstName lastName email')
       .populate('updatedBy', 'firstName lastName email');
-    
+
     res.json({
       success: true,
       page,
@@ -255,50 +280,10 @@ router.get('/', authMiddleware, async (req, res) => {
       questionSets: questionSets.map(qs => qs.getSimplified())
     });
   } catch (error) {
-    console.error('Erreur de récupération des questions:', error);
+    console.error('Erreur de récupération des ensembles de questions:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des ensembles de questions',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
-/**
- * @route   GET /api/questions/:id
- * @desc    Obtenir un ensemble de questions spécifique
- * @access  Private
- */
-router.get('/:id', authMiddleware, async (req, res) => {
-  try {
-    const questionSet = await QuestionSet.findById(req.params.id)
-      .populate('createdBy', 'firstName lastName email')
-      .populate('updatedBy', 'firstName lastName email');
-    
-    if (!questionSet) {
-      return res.status(404).json({
-        success: false,
-        message: 'Ensemble de questions introuvable'
-      });
-    }
-    
-    // Vérifier si l'ensemble est actif, sauf pour les administrateurs
-    if (!questionSet.isActive && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Cet ensemble de questions n\'est pas disponible actuellement'
-      });
-    }
-    
-    res.json({
-      success: true,
-      questionSet
-    });
-  } catch (error) {
-    console.error('Erreur de récupération de l\'ensemble de questions:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur lors de la récupération de l\'ensemble de questions',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
@@ -514,12 +499,15 @@ router.get('/all', authMiddleware, adminAuth, async (req, res) => {
       filter.isActive = req.query.active === 'true';
     }
     
-    // Recherche textuelle
+    // Recherche textuelle (mot entier) - éviter que 'Inactive' corresponde à 'Active'
     if (req.query.search) {
+      const escapeRegExp = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const term = escapeRegExp(req.query.search.trim());
+      const regex = new RegExp(`\\b${term}\\b`, 'i');
       filter.$or = [
-        { title: { $regex: req.query.search, $options: 'i' } },
-        { description: { $regex: req.query.search, $options: 'i' } },
-        { targetCertification: { $regex: req.query.search, $options: 'i' } }
+        { title: regex },
+        { description: regex },
+        { targetCertification: regex }
       ];
     }
     
@@ -585,6 +573,12 @@ router.post('/:id/activate', authMiddleware, adminAuth, async (req, res) => {
     }
     
     // Trouver le questionnaire
+    // Validate ObjectId
+    const mongoose = require('mongoose');
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(404).json({ success: false, message: 'Questionnaire introuvable' });
+    }
+
     const questionSet = await QuestionSet.findById(id);
     
     if (!questionSet) {
@@ -633,7 +627,7 @@ router.post('/:id/activate', authMiddleware, adminAuth, async (req, res) => {
     res.json({
       success: true,
       message: `Questionnaire ${active ? 'activé' : 'désactivé'} avec succès`,
-      questionSet: questionSet.getSimplified()
+      questionSet
     });
   } catch (error) {
     logger.logError('Failed to activate question set', {
@@ -702,3 +696,39 @@ function validateQuestionSet(data) {
 }
 
 module.exports = router; 
+
+// GET /api/questions/:id - placed at end to avoid route collision with '/all'
+router.get('/:id', authMiddleware, async (req, res) => {
+  try {
+    const questionSet = await QuestionSet.findById(req.params.id)
+      .populate('createdBy', 'firstName lastName email')
+      .populate('updatedBy', 'firstName lastName email');
+
+    if (!questionSet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ensemble de questions introuvable'
+      });
+    }
+
+    // Vérifier si l'ensemble est actif, sauf pour les administrateurs
+    if (!questionSet.isActive && (!req.user || req.user.role !== 'admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cet ensemble de questions n\'est pas disponible actuellement'
+      });
+    }
+
+    res.json({
+      success: true,
+      questionSet
+    });
+  } catch (error) {
+    console.error('Erreur de récupération de l\'ensemble de questions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des ensembles de questions',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});

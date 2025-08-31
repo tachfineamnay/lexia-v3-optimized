@@ -173,7 +173,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Identifiants invalides'
+        error: 'Email ou mot de passe incorrect'
       });
     }
 
@@ -188,14 +188,14 @@ router.post('/login', loginLimiter, async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Identifiants invalides'
+        error: 'Email ou mot de passe incorrect'
       });
     }
 
     if (!user.isEmailVerified) {
       return res.status(401).json({
         success: false,
-        message: 'Veuillez vérifier votre email avant de vous connecter'
+        error: 'Veuillez vérifier votre email'
       });
     }
 
@@ -467,10 +467,10 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
     // Rechercher l'utilisateur
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      // Pour des raisons de sécurité, ne pas indiquer si l'utilisateur existe ou non
+      // Pour des raisons de sécurité, renvoyer le même message que si l'utilisateur existait
       return res.json({
         success: true,
-        message: 'Si cet email existe dans notre système, un lien de réinitialisation a été envoyé'
+        message: 'Un email de réinitialisation a été envoyé'
       });
     }
 
@@ -485,7 +485,7 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Si cet email existe dans notre système, un lien de réinitialisation a été envoyé'
+      message: 'Un email de réinitialisation a été envoyé'
     });
   } catch (err) {
     console.error('Erreur de demande de réinitialisation de mot de passe:', err.message);
@@ -530,7 +530,7 @@ router.post('/reset-password/:token', async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'Token de réinitialisation invalide ou expiré'
+        error: 'Token invalide ou expiré'
       });
     }
 
@@ -538,6 +538,8 @@ router.post('/reset-password/:token', async (req, res) => {
     user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
+    // Après réinitialisation du mot de passe, marquer l'email comme vérifié
+    user.isEmailVerified = true;
     await user.save();
 
     res.json({

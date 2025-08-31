@@ -1,14 +1,14 @@
-const request = require('supertest');
-const app = require('../server');
-const User = require('../models/user'); // Correction: fichier avec minuscule
-const jwt = require('jsonwebtoken');
-
-// Mock de nodemailer
+// Mock de nodemailer (must be declared before app is required)
 jest.mock('nodemailer', () => ({
   createTransport: jest.fn().mockReturnValue({
     sendMail: jest.fn().mockResolvedValue({ messageId: 'test-message-id' })
   })
 }));
+
+const request = require('supertest');
+const app = require('../server');
+const User = require('../models/user'); // Correction: fichier avec minuscule
+const jwt = require('jsonwebtoken');
 
 describe('Authentication Tests', () => {
   const testUser = {
@@ -99,8 +99,6 @@ describe('Authentication Tests', () => {
       expect(response.body.message).toContain('Token invalide ou expiré');
     });
   });
-  });
-
   describe('POST /api/auth/login', () => {
     beforeEach(async () => {
       // Créer un utilisateur vérifié

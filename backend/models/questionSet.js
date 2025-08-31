@@ -16,7 +16,8 @@ const optionSchema = new mongoose.Schema({
 const questionSchema = new mongoose.Schema({
   questionId: {
     type: String,
-    required: true
+  required: true,
+  default: function() { return new mongoose.Types.ObjectId().toString(); }
   },
   text: {
     type: String,
@@ -62,7 +63,8 @@ const questionSchema = new mongoose.Schema({
 const sectionSchema = new mongoose.Schema({
   sectionId: {
     type: String,
-    required: true
+  required: true,
+  default: function() { return new mongoose.Types.ObjectId().toString(); }
   },
   title: {
     type: String,
@@ -145,15 +147,16 @@ questionSetSchema.methods.getSimplified = function() {
   const result = {
     id: this._id,
     title: this.title,
+  isActive: this.isActive,
     description: this.description,
     targetCertification: this.targetCertification,
     certificationLevel: this.certificationLevel,
     version: this.version,
     sections: this.sections.map(section => ({
-      id: section.sectionId,
-      title: section.title,
-      description: section.description,
-      questionCount: section.questions.length
+  id: section.sectionId,
+  title: section.title,
+  description: section.description,
+  questionCount: Array.isArray(section.questions) ? section.questions.length : 0
     }))
   };
   

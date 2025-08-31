@@ -17,7 +17,7 @@ const authMiddleware = (req, res, next) => {
   if (!token) {
     return res.status(401).json({ 
       success: false, 
-      message: 'Accès refusé, aucun token fourni' 
+      error: 'Non authentifié' 
     });
   }
 
@@ -25,8 +25,12 @@ const authMiddleware = (req, res, next) => {
     // Vérifier le token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Ajouter les infos utilisateur à la requête
-    req.user = decoded.user || decoded;
+  // Ajouter les infos utilisateur à la requête
+  const payload = decoded.user || decoded;
+  // Normalize: always provide both id and userId if possible
+  req.user = Object.assign({}, payload);
+  if (!req.user.id && req.user.userId) req.user.id = req.user.userId;
+  if (!req.user.userId && req.user.id) req.user.userId = req.user.id;
     
     next();
   } catch (err) {
@@ -35,14 +39,14 @@ const authMiddleware = (req, res, next) => {
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ 
         success: false, 
-        message: 'Token expiré, veuillez vous reconnecter',
+        error: 'Token expiré, veuillez vous reconnecter',
         expired: true
       });
     }
     
     return res.status(401).json({ 
       success: false, 
-      message: 'Token invalide' 
+      error: 'Token invalide' 
     });
   }
 };

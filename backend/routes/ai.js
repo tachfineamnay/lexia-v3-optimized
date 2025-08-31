@@ -638,6 +638,11 @@ async function callGPT4(message, context) {
 // Fonction pour appeler Claude
 async function callClaude(message, context) {
   try {
+    if (typeof anthropic === 'undefined' || !process.env.ANTHROPIC_API_KEY) {
+      // Anthropic non configuré, renvoyer une erreur claire pour le caller
+      throw new Error('Anthropic client not configured');
+    }
+
     const response = await anthropic.messages.create({
       model: "claude-3-opus-20240229",
       max_tokens: 1000,
@@ -649,8 +654,14 @@ async function callClaude(message, context) {
         { role: "user", content: message }
       ]
     });
-    
-    return response.content[0].text;
+
+    // Anthropic SDK responses may vary; defend against different shapes
+    if (response?.content && Array.isArray(response.content) && response.content[0]?.text) {
+      return response.content[0].text;
+    }
+
+    if (response?.completion) return response.completion;
+    return String(response);
   } catch (error) {
     console.error('Erreur Claude:', error);
     throw error;
@@ -680,11 +691,16 @@ async function callGemini(message, context) {
 async function callMultiAI(message, context) {
   try {
     // Appeler les 3 IA en parallèle
-    const [gptResponse, claudeResponse, geminiResponse] = await Promise.all([
-      callGPT4(message, context).catch(err => ({ error: err.message })),
-      callClaude(message, context).catch(err => ({ error: err.message })),
-      callGemini(message, context).catch(err => ({ error: err.message }))
-    ]);
+    // Prepare calls conditionally (skip Claude if not configured)
+    const calls = [callGPT4(message, context).catch(err => ({ error: err.message }))];
+    if (process.env.ANTHROPIC_API_KEY) {
+      calls.push(callClaude(message, context).catch(err => ({ error: err.message })));
+    } else {
+      calls.push(Promise.resolve({ error: 'Anthropic not configured' }));
+    }
+    calls.push(callGemini(message, context).catch(err => ({ error: err.message })));
+
+    const [gptResponse, claudeResponse, geminiResponse] = await Promise.all(calls);
 
     // Synthétiser les réponses
     const synthesisPrompt = `
