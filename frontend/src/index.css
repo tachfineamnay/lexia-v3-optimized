@@ -6,10 +6,10 @@
 /* === BASE STYLES & ACCESSIBILITY === */
 @layer base {
   /* Réinitialisation de base pour tous les éléments */
-  * {
+  *, *::before, *::after {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
   }
 
   /* Comportement de défilement doux pour l'accessibilité */
@@ -60,8 +60,9 @@
   }
 }
 
-/* === TYPOGRAPHY === */
+/* === COMPONENTS === */
 @layer components {
+  /* Typography */
   .heading-1 {
     @apply text-5xl font-extrabold tracking-tight text-neutral-900;
   }
@@ -86,10 +87,8 @@
   .caption {
     @apply text-xs font-medium uppercase tracking-wider text-neutral-400;
   }
-}
 
-/* === BUTTON SYSTEM === */
-@layer components {
+  /* Button System */
   .btn {
     @apply inline-flex items-center justify-center gap-2 border-none rounded-lg font-medium font-sans cursor-pointer transition-all duration-fast no-underline whitespace-nowrap select-none outline-none relative overflow-hidden;
   }
@@ -135,16 +134,14 @@
   .btn-ghost:hover {
     @apply bg-neutral-100 text-neutral-800;
   }
-}
 
-/* === INPUT SYSTEM === */
-@layer components {
+  /* Input System & Form Fields */
   .input {
     @apply w-full border border-neutral-200 rounded-lg p-3 px-4 text-base leading-normal text-neutral-800 bg-neutral-0 transition-all duration-fast outline-none;
   }
 
   .input:focus {
-    @apply border-primary-500 shadow-outline-primary;
+    @apply border-primary-500 shadow-[0_0_0_3px_theme(colors.primary.200)]; /* Utilise le thème pour l'ombre */
   }
 
   .input:disabled {
@@ -156,10 +153,9 @@
   }
 
   .input-error:focus {
-    @apply border-error-500 shadow-outline-error;
+    @apply border-error-500 shadow-[0_0_0_3px_theme(colors.error.200)]; /* Utilise le thème pour l'ombre */
   }
 
-  /* Form fields optimisés */
   .lexia-form-group {
     @apply mb-4;
   }
@@ -192,10 +188,8 @@
   .lexia-helper-error {
     @apply text-error-600;
   }
-}
 
-/* === CARD SYSTEM === */
-@layer components {
+  /* Card System */
   .card {
     @apply bg-neutral-0 border border-neutral-200 rounded-xl overflow-hidden transition-all duration-normal;
   }
@@ -219,10 +213,8 @@
   .card-footer {
     @apply p-6 border-t border-neutral-200 bg-neutral-50;
   }
-}
 
-/* === BADGE SYSTEM === */
-@layer components {
+  /* Badge System */
   .badge {
     @apply inline-flex items-center gap-1 p-1 px-2 rounded-full text-xs font-medium leading-tight;
   }
@@ -242,10 +234,8 @@
   .badge-error {
     @apply bg-error-50 text-error-600;
   }
-}
 
-/* === ALERT SYSTEM === */
-@layer components {
+  /* Alert System */
   .lexia-alert {
     @apply p-4 rounded-md border-l-4;
   }
@@ -265,10 +255,8 @@
   .lexia-alert-info {
     @apply lexia-alert bg-primary-50 border-primary-500 text-primary-700;
   }
-}
 
-/* === NAVIGATION === */
-@layer components {
+  /* Navigation */
   .lexia-nav-link {
     @apply inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200;
   }
@@ -280,10 +268,8 @@
   .lexia-nav-link-inactive {
     @apply lexia-nav-link border-transparent text-neutral-500 hover:border-neutral-300 hover:text-neutral-700;
   }
-}
 
-/* === LAYOUT UTILITIES === */
-@layer components {
+  /* Layout Utilities */
   .container {
     @apply w-full max-w-screen-xl mx-auto px-4;
   }
@@ -311,10 +297,8 @@
   .absolute-center {
     @apply absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
   }
-}
 
-/* === PROGRESS INDICATOR === */
-@layer components {
+  /* Progress Indicator */
   .lexia-progress-bar {
     @apply w-full h-2 bg-neutral-200 rounded-full overflow-hidden;
   }
@@ -322,10 +306,8 @@
   .lexia-progress-fill {
     @apply h-full bg-primary-500 transition-all duration-normal;
   }
-}
 
-/* === TOOLTIPS === */
-@layer components {
+  /* Tooltips */
   .lexia-tooltip {
     @apply relative inline-block;
   }
@@ -341,10 +323,8 @@
   .lexia-tooltip:hover .lexia-tooltip-content {
     @apply visible opacity-100;
   }
-}
 
-/* === MODAL SYSTEM === */
-@layer components {
+  /* Modal System */
   .lexia-modal-backdrop {
     @apply fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] backdrop-blur-sm;
   }
@@ -363,10 +343,8 @@
       transform: translateY(0);
     }
   }
-}
 
-/* === TABLES === */
-@layer components {
+  /* Tables */
   .lexia-table {
     @apply min-w-full divide-y divide-neutral-200;
   }
@@ -390,25 +368,21 @@
   .lexia-table-cell {
     @apply px-6 py-4 whitespace-nowrap text-sm text-neutral-500;
   }
-}
 
-/* === LOADING STATES === */
-@layer components {
-  .loading { /* Already defined above, keeping for consistency with previous changes if used */
+  /* Loading States */
+  .loading {
     @apply opacity-60 pointer-events-none;
   }
 
-  .spinner { /* Already defined above, keeping for consistency with previous changes if used */
+  .spinner {
     @apply w-6 h-6 border-2 border-neutral-200 border-t-primary-500 rounded-full animate-spin;
   }
 
   .lexia-loading {
     @apply animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500;
   }
-}
 
-/* === FILE UPLOAD === */
-@layer components {
+  /* File Upload */
   .lexia-file-upload {
     @apply block w-full text-sm text-neutral-500
       file:mr-4 file:py-2 file:px-4
@@ -417,10 +391,8 @@
       file:bg-primary-50 file:text-primary-700
       hover:file:bg-primary-100;
   }
-}
 
-/* === PAGINATION === */
-@layer components {
+  /* Pagination */
   .lexia-pagination {
     @apply relative z-0 inline-flex rounded-md shadow-sm -space-x-px;
   }
@@ -432,10 +404,8 @@
   .lexia-pagination-button-active {
     @apply z-10 bg-primary-50 border-primary-500 text-primary-600;
   }
-}
 
-/* === FILTERS === */
-@layer components {
+  /* Filters */
   .lexia-filter-button {
     @apply px-3 py-2 rounded-md text-sm font-medium;
   }
@@ -485,25 +455,8 @@
     @apply animate-[scaleIn_0.2s_ease-out_forwards];
   }
 
-  .sr-only {
-    @apply sr-only;
-  }
-
-  .truncate {
-    @apply overflow-hidden text-ellipsis whitespace-nowrap;
-  }
-
   .gradient-text {
     @apply bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent;
-  }
-
-  /* Custom shadow for focus states (used by inputs) */
-  .shadow-outline-primary {
-    box-shadow: 0 0 0 3px theme('colors.primary.200');
-  }
-
-  .shadow-outline-error {
-    box-shadow: 0 0 0 3px theme('colors.error.200');
   }
 
   /* Responsive Design - Ajouté ici car @screen est un utilitaire */
