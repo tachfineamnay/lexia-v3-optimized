@@ -18,7 +18,6 @@ try {
   }
 } catch (error) {
   console.error('Erreur lors de l\'import du middleware auth:', error);
-  // Middleware de secours qui renvoie une erreur 401
   auth = (req, res, next) => {
     res.status(401).json({
       success: false,
@@ -34,17 +33,13 @@ try {
  */
 router.post('/register', async (req, res) => {
   try {
-    const {
-      email,
-      password,
-      prenom,
-      nom,
-      phoneNumber,
-      dateOfBirth,
-      address,
-      targetCertification,
-      professionalInfo
-    } = req.body;
+    // Accepte « prenom/nom » ou « name »
+    let { email, password, prenom, nom, name } = req.body;
+
+    // Si "name" est fourni, on le split
+    if (!prenom && !nom && name) {
+      [prenom, nom] = name.trim().split(/\s+/);
+    }
 
     // Validation des données
     if (!email || !password || !prenom || !nom) {
@@ -80,17 +75,16 @@ router.post('/register', async (req, res) => {
       password,
       firstName: prenom,
       lastName: nom,
-      phoneNumber,
-      dateOfBirth,
-      address,
-      targetCertification,
-      professionalInfo,
+      phoneNumber: req.body.phoneNumber,
+      dateOfBirth: req.body.dateOfBirth,
+      address: req.body.address,
+      targetCertification: req.body.targetCertification,
+      professionalInfo: req.body.professionalInfo,
       emailVerificationToken,
       emailVerificationExpires,
       isEmailVerified: false
     });
 
-    // Enregistrer l'utilisateur (le middleware pre-save hash automatiquement le mot de passe)
     await user.save();
 
     // Génération des statistiques initiales
@@ -113,12 +107,7 @@ router.post('/register', async (req, res) => {
         role: user.role
       }
     };
-
-    const token = jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '2h' }
-    );
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2h' });
 
     // Générer refresh token
     const refreshToken = jwt.sign(
@@ -158,7 +147,6 @@ router.post('/login', loginLimiter, async (req, res) => {
     const userAgent = req.headers['user-agent'] || 'unknown';
     const ipAddress = req.ip || req.connection.remoteAddress;
 
-    // Validation des données
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -166,7 +154,6 @@ router.post('/login', loginLimiter, async (req, res) => {
       });
     }
 
-    // Rechercher l'utilisateur
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(401).json({
@@ -175,7 +162,6 @@ router.post('/login', loginLimiter, async (req, res) => {
       });
     }
 
-    // Vérifier si l'utilisateur est actif
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
@@ -183,7 +169,6 @@ router.post('/login', loginLimiter, async (req, res) => {
       });
     }
 
-    // Vérifier le mot de passe
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({
@@ -192,7 +177,6 @@ router.post('/login', loginLimiter, async (req, res) => {
       });
     }
 
-    // Vérifier si l'utilisateur est vérifié
     if (!user.isEmailVerified) {
       return res.status(401).json({
         success: false,
@@ -200,10 +184,8 @@ router.post('/login', loginLimiter, async (req, res) => {
       });
     }
 
-    // Mettre à jour les informations de connexion
     await user.updateLoginStatus(ipAddress, userAgent);
 
-    // Générer JWT
     const payload = {
       user: {
         id: user.id,
@@ -211,23 +193,15 @@ router.post('/login', loginLimiter, async (req, res) => {
         role: user.role
       }
     };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2h' });
 
-    const token = jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '2h' }
-    );
-
-    // Générer refresh token
     const refreshToken = jwt.sign(
       { userId: user.id },
       process.env.REFRESH_TOKEN_SECRET || 'refreshsecretfallback',
       { expiresIn: '7d' }
     );
 
-    // Retourner les informations de l'utilisateur sans le mot de passe
     const userProfile = user.getProfile();
-
     res.json({
       success: true,
       message: 'Connexion réussie',
