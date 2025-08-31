@@ -53,6 +53,24 @@ export default {
         }
       }
     },
+    // Ajout de la configuration pour les classes utilitaires ring
+    plugins: [
+      function({ addUtilities }) {
+        const newUtilities = {
+          '.ring-primary-500': {
+            boxShadow: '0 0 0 3px rgba(14, 165, 233, 0.5)',
+          },
+          '.ring-primary-600': {
+            boxShadow: '0 0 0 3px rgba(2, 132, 199, 0.5)',
+          },
+          '.ring-primary-700': {
+            boxShadow: '0 0 0 3px rgba(3, 105, 161, 0.5)',
+          },
+        };
+        
+        addUtilities(newUtilities, ['responsive']);
+      }
+    ]
   },
   plugins: [],
-} 
+}
