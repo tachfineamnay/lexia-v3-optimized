@@ -1,3 +1,4 @@
+@reference "@tailwindcss/tailwind.css";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
@@ -141,7 +142,7 @@
   }
 
   .input:focus {
-    @apply border-primary-500 shadow-[0_0_0_3px_theme(colors.primary.200)]; /* Utilise le thème pour l'ombre */
+    @apply border-primary-500 shadow-[0_0_0_3px_theme(colors.primary.200)];
   }
 
   .input:disabled {
@@ -153,7 +154,7 @@
   }
 
   .input-error:focus {
-    @apply border-error-500 shadow-[0_0_0_3px_theme(colors.error.200)]; /* Utilise le thème pour l'ombre */
+    @apply border-error-500 shadow-[0_0_0_3px_theme(colors.error.200)];
   }
 
   .lexia-form-group {
