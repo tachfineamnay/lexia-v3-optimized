@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../server');
-const User = require('../models/User');
+const User = require('../models/user'); // Correction: fichier avec minuscule
 const jwt = require('jsonwebtoken');
 
 // Mock de nodemailer
@@ -25,7 +25,10 @@ describe('Authentication Tests', () => {
         .send(testUser);
 
       expect(response.status).toBe(201);
-      expect(response.body.message).toContain('Inscription réussie');
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('Utilisateur créé avec succès');
+      expect(response.body.token).toBeTruthy();
+      expect(response.body.user).toBeTruthy();
 
       // Vérifier que l'utilisateur est créé dans la base de données
       const user = await User.findOne({ email: testUser.email });
@@ -44,7 +47,24 @@ describe('Authentication Tests', () => {
         .send(testUser);
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toContain('Cet email est déjà utilisé');
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Un utilisateur avec cet email existe déjà');
+    });
+    
+    it('should accept legacy prenom/nom format', async () => {
+      const legacyUser = {
+        email: 'legacy@example.com',
+        password: 'password123',
+        prenom: 'Legacy',
+        nom: 'User'
+      };
+      
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(legacyUser);
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
     });
   });
 
@@ -61,6 +81,7 @@ describe('Authentication Tests', () => {
         .get(`/api/auth/verify-email/${user.emailVerificationToken}`);
 
       expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('Email vérifié avec succès');
 
       // Vérifier que l'utilisateur est marqué comme vérifié
@@ -74,8 +95,10 @@ describe('Authentication Tests', () => {
         .get('/api/auth/verify-email/invalid-token');
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toContain('Token invalide ou expiré');
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Token invalide ou expiré');
     });
+  });
   });
 
   describe('POST /api/auth/login', () => {

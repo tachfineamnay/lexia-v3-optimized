@@ -33,19 +33,34 @@ try {
  */
 router.post('/register', async (req, res) => {
   try {
-    // Accepte « prenom/nom » ou « name »
-    let { email, password, prenom, nom, name } = req.body;
+    // Accepte les formats frontend (firstName/lastName) ou legacy (prenom/nom) ou name
+    let { email, password, firstName, lastName, prenom, nom, name } = req.body;
+
+    // Mappage des champs frontend vers backend
+    let finalFirstName = firstName || prenom;
+    let finalLastName = lastName || nom;
 
     // Si "name" est fourni, on le split
-    if (!prenom && !nom && name) {
-      [prenom, nom] = name.trim().split(/\s+/);
+    if (!finalFirstName && !finalLastName && name) {
+      const nameParts = name.trim().split(/\s+/);
+      finalFirstName = nameParts[0];
+      finalLastName = nameParts.slice(1).join(' ') || nameParts[0];
     }
 
     // Validation des données
-    if (!email || !password || !prenom || !nom) {
+    if (!email || !password || !finalFirstName || !finalLastName) {
       return res.status(400).json({
         success: false,
         message: 'Email, mot de passe, prénom et nom sont requis'
+      });
+    }
+
+    // Validation de l'email
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Veuillez entrer un email valide'
       });
     }
 
@@ -73,8 +88,8 @@ router.post('/register', async (req, res) => {
     user = new User({
       email,
       password,
-      firstName: prenom,
-      lastName: nom,
+      firstName: finalFirstName,
+      lastName: finalLastName,
       phoneNumber: req.body.phoneNumber,
       dateOfBirth: req.body.dateOfBirth,
       address: req.body.address,
@@ -408,7 +423,10 @@ router.get('/verify-email/:token', async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ error: 'Token invalide ou expiré' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Token invalide ou expiré' 
+      });
     }
 
     user.isEmailVerified = true;
@@ -416,10 +434,17 @@ router.get('/verify-email/:token', async (req, res) => {
     user.emailVerificationExpires = undefined;
     await user.save();
 
-    res.json({ message: 'Email vérifié avec succès' });
+    res.json({ 
+      success: true,
+      message: 'Email vérifié avec succès' 
+    });
   } catch (error) {
     console.error('Erreur lors de la vérification de l\'email:', error);
-    res.status(500).json({ error: 'Erreur lors de la vérification de l\'email' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Erreur serveur lors de la vérification de l\'email',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
