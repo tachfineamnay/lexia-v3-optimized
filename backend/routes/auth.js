@@ -12,18 +12,17 @@ let auth;
 try {
   const authModule = require('../middleware/auth');
   auth = authModule.authMiddleware;
-  
   if (typeof auth !== 'function') {
-    console.error('ERREUR: authMiddleware n\'est pas une fonction dans le module');
+    console.error("ERREUR: authMiddleware n'est pas une fonction dans le module");
     throw new Error('authMiddleware is not a function');
   }
 } catch (error) {
   console.error('Erreur lors de l\'import du middleware auth:', error);
   // Middleware de secours qui renvoie une erreur 401
   auth = (req, res, next) => {
-    res.status(401).json({ 
-      success: false, 
-      message: 'Erreur de configuration du serveur - middleware auth non disponible' 
+    res.status(401).json({
+      success: false,
+      message: 'Erreur de configuration du serveur - middleware auth non disponible'
     });
   };
 }
@@ -35,11 +34,11 @@ try {
  */
 router.post('/register', async (req, res) => {
   try {
-    const { 
-      email, 
-      password, 
-      firstName, 
-      lastName, 
+    const {
+      email,
+      password,
+      prenom,
+      nom,
       phoneNumber,
       dateOfBirth,
       address,
@@ -48,26 +47,26 @@ router.post('/register', async (req, res) => {
     } = req.body;
 
     // Validation des données
-    if (!email || !password || !firstName || !lastName) {
-      return res.status(400).json({ 
+    if (!email || !password || !prenom || !nom) {
+      return res.status(400).json({
         success: false,
-        message: 'Email, mot de passe, prénom et nom sont requis' 
+        message: 'Email, mot de passe, prénom et nom sont requis'
       });
     }
 
     if (password.length < 8) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Le mot de passe doit contenir au moins 8 caractères' 
+        message: 'Le mot de passe doit contenir au moins 8 caractères'
       });
     }
 
     // Vérifier si l'utilisateur existe déjà
     let user = await User.findOne({ email: email.toLowerCase() });
     if (user) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Un utilisateur avec cet email existe déjà' 
+        message: 'Un utilisateur avec cet email existe déjà'
       });
     }
 
@@ -79,8 +78,8 @@ router.post('/register', async (req, res) => {
     user = new User({
       email,
       password,
-      firstName,
-      lastName,
+      firstName: prenom,
+      lastName: nom,
       phoneNumber,
       dateOfBirth,
       address,
@@ -101,7 +100,6 @@ router.post('/register', async (req, res) => {
       documentsUploaded: 0,
       lastActive: new Date()
     };
-
     await user.save();
 
     // Envoyer l'email de vérification
@@ -141,7 +139,7 @@ router.post('/register', async (req, res) => {
     });
   } catch (err) {
     console.error('Erreur d\'inscription:', err.message);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Erreur serveur',
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -162,43 +160,43 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     // Validation des données
     if (!email || !password) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Email et mot de passe sont requis' 
+        message: 'Email et mot de passe sont requis'
       });
     }
 
     // Rechercher l'utilisateur
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Identifiants invalides' 
+        message: 'Identifiants invalides'
       });
     }
 
     // Vérifier si l'utilisateur est actif
     if (!user.isActive) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Ce compte est désactivé. Veuillez contacter l\'administrateur.' 
+        message: 'Ce compte est désactivé. Veuillez contacter l\'administrateur.'
       });
     }
 
     // Vérifier le mot de passe
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Identifiants invalides' 
+        message: 'Identifiants invalides'
       });
     }
 
     // Vérifier si l'utilisateur est vérifié
     if (!user.isEmailVerified) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Veuillez vérifier votre email avant de vous connecter' 
+        message: 'Veuillez vérifier votre email avant de vous connecter'
       });
     }
 
@@ -239,7 +237,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     });
   } catch (err) {
     console.error('Erreur de connexion:', err.message);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Erreur serveur',
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -257,35 +255,35 @@ router.post('/refresh-token', async (req, res) => {
     const { refreshToken } = req.body;
 
     if (!refreshToken) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Refresh token requis' 
+        message: 'Refresh token requis'
       });
     }
 
     // Vérifier le refresh token
     const decoded = jwt.verify(
-      refreshToken, 
+      refreshToken,
       process.env.REFRESH_TOKEN_SECRET || 'refreshsecretfallback'
     );
-    
+
     // Vérifier si l'utilisateur existe toujours
     const user = await User.findById(decoded.userId);
     if (!user) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Utilisateur introuvable' 
+        message: 'Utilisateur introuvable'
       });
     }
 
     // Vérifier si l'utilisateur est actif
     if (!user.isActive) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Ce compte est désactivé' 
+        message: 'Ce compte est désactivé'
       });
     }
-    
+
     // Générer un nouveau token JWT
     const payload = {
       user: {
@@ -316,13 +314,13 @@ router.post('/refresh-token', async (req, res) => {
   } catch (err) {
     console.error('Erreur de rafraîchissement de token:', err.message);
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Refresh token invalide ou expiré' 
+        message: 'Refresh token invalide ou expiré'
       });
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       success: false,
       message: 'Erreur serveur',
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -341,50 +339,7 @@ router.get('/me', auth, async (req, res) => {
       .select('-password')
       .populate('dossiers', 'title status updatedAt')
       .populate('documents', 'title type updatedAt');
-    
-    if (!user) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Utilisateur introuvable' 
-      });
-    }
-    
-    res.json({
-      success: true,
-      user: user.getProfile()
-    });
-  } catch (err) {
-    console.error('Erreur de récupération du profil:', err.message);
-    res.status(500).json({ 
-      success: false,
-      message: 'Erreur serveur',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
-  }
-});
 
-/**
- * @route   PUT /api/auth/profile
- * @desc    Mettre à jour le profil utilisateur
- * @access  Private
- */
-router.put('/profile', auth, async (req, res) => {
-  try {
-    const {
-      firstName,
-      lastName,
-      phoneNumber,
-      dateOfBirth,
-      address,
-      bio,
-      professionalInfo,
-      education,
-      targetCertification,
-      preferences
-    } = req.body;
-
-    // Récupérer l'utilisateur
-    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -392,53 +347,12 @@ router.put('/profile', auth, async (req, res) => {
       });
     }
 
-    // Mettre à jour les champs fournis
-    if (firstName) user.firstName = firstName;
-    if (lastName) user.lastName = lastName;
-    if (phoneNumber) user.phoneNumber = phoneNumber;
-    if (dateOfBirth) user.dateOfBirth = new Date(dateOfBirth);
-    if (bio) user.bio = bio;
-    if (targetCertification) user.targetCertification = targetCertification;
-
-    // Mettre à jour l'adresse si fournie
-    if (address) {
-      user.address = {
-        ...user.address,
-        ...address
-      };
-    }
-
-    // Mettre à jour les informations professionnelles si fournies
-    if (professionalInfo) {
-      user.professionalInfo = {
-        ...user.professionalInfo,
-        ...professionalInfo
-      };
-    }
-
-    // Mettre à jour l'éducation si fournie
-    if (education && Array.isArray(education)) {
-      user.education = education;
-    }
-
-    // Mettre à jour les préférences si fournies
-    if (preferences) {
-      user.preferences = {
-        ...user.preferences,
-        ...preferences
-      };
-    }
-
-    // Sauvegarder les modifications
-    await user.save();
-
     res.json({
       success: true,
-      message: 'Profil mis à jour avec succès',
       user: user.getProfile()
     });
   } catch (err) {
-    console.error('Erreur de mise à jour du profil:', err.message);
+    console.error('Erreur de récupération du profil:', err.message);
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
@@ -654,4 +568,4 @@ router.post('/logout', auth, (req, res) => {
   });
 });
 
-module.exports = router; 
+module.exports = router;
