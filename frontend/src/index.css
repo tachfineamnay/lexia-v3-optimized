@@ -2,459 +2,526 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-/* === MODERN DESIGN SYSTEM === */
-:root {
-  /* Primary Colors - Élégant et moderne */
-  --primary-50: #f0f9ff;
-  --primary-100: #e0f2fe;
-  --primary-200: #bae6fd;
-  --primary-300: #7dd3fc;
-  --primary-400: #38bdf8;
-  --primary-500: #0ea5e9;
-  --primary-600: #0284c7;
-  --primary-700: #0369a1;
-  --primary-800: #075985;
-  --primary-900: #0c4a6e;
-  
-  /* Neutral Colors - Système monochrome moderne */
-  --neutral-0: #ffffff;
-  --neutral-50: #fafafa;
-  --neutral-100: #f5f5f5;
-  --neutral-200: #e5e5e5;
-  --neutral-300: #d4d4d4;
-  --neutral-400: #a3a3a3;
-  --neutral-500: #737373;
-  --neutral-600: #525252;
-  --neutral-700: #404040;
-  --neutral-800: #262626;
-  --neutral-900: #171717;
-  --neutral-950: #0a0a0a;
-  
-  /* Success Colors */
-  --success-50: #f0fdf4;
-  --success-500: #22c55e;
-  --success-600: #16a34a;
-  
-  /* Warning Colors */
-  --warning-50: #fffbeb;
-  --warning-500: #f59e0b;
-  --warning-600: #d97706;
-  
-  /* Error Colors */
-  --error-50: #fef2f2;
-  --error-500: #ef4444;
-  --error-600: #dc2626;
-  
-  /* Spacing System */
-  --space-px: 1px;
-  --space-0: 0;
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
-  --space-20: 5rem;
-  --space-24: 6rem;
-  --space-32: 8rem;
-  
-  /* Border Radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
-  --radius-full: 9999px;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-  
-  /* Animations */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+
+/* === BASE STYLES & ACCESSIBILITY === */
+@layer base {
+  /* Réinitialisation de base pour tous les éléments */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  /* Comportement de défilement doux pour l'accessibilité */
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Styles de corps globaux, utilisant la famille de polices et les couleurs définies dans tailwind.config.js */
+  body {
+    @apply font-sans leading-relaxed text-neutral-800 bg-neutral-0 antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Styles pour le conteneur racine de l'application */
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Gestion du focus visible pour l'accessibilité, utilisant la couleur primaire étendue */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-neutral-0;
+  }
+
+  /* Personnalisation de la barre de défilement pour une meilleure esthétique */
+  ::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-neutral-100;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-neutral-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-400;
+  }
+
+  /* Style de sélection de texte */
+  ::selection {
+    @apply bg-primary-200 text-primary-800;
+  }
 }
-/* Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+
+/* === TYPOGRAPHY === */
+@layer components {
+  .heading-1 {
+    @apply text-5xl font-extrabold tracking-tight text-neutral-900;
+  }
+  .heading-2 {
+    @apply text-4xl font-bold tracking-tight text-neutral-900;
+  }
+  .heading-3 {
+    @apply text-3xl font-semibold tracking-tight text-neutral-800;
+  }
+  .heading-4 {
+    @apply text-2xl font-semibold tracking-tight text-neutral-800;
+  }
+  .body-large {
+    @apply text-lg text-neutral-700 leading-relaxed;
+  }
+  .body-normal {
+    @apply text-base text-neutral-600 leading-relaxed;
+  }
+  .body-small {
+    @apply text-sm text-neutral-500 leading-normal;
+  }
+  .caption {
+    @apply text-xs font-medium uppercase tracking-wider text-neutral-400;
+  }
 }
-html {
-  scroll-behavior: smooth;
-  -webkit-text-size-adjust: 100%;
+
+/* === BUTTON SYSTEM === */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 border-none rounded-lg font-medium font-sans cursor-pointer transition-all duration-fast no-underline whitespace-nowrap select-none outline-none relative overflow-hidden;
+  }
+
+  .btn:disabled {
+    @apply opacity-50 cursor-not-allowed pointer-events-none;
+  }
+
+  /* Tailles de boutons */
+  .btn-sm {
+    @apply h-9 px-3 text-sm;
+  }
+
+  .btn-md {
+    @apply h-11 px-4 text-base;
+  }
+
+  .btn-lg {
+    @apply h-13 px-6 text-lg;
+  }
+
+  /* Variantes de boutons */
+  .btn-primary {
+    @apply bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-md;
+  }
+
+  .btn-primary:hover {
+    @apply from-primary-600 to-primary-700 shadow-lg -translate-y-px;
+  }
+
+  .btn-secondary {
+    @apply bg-neutral-0 text-neutral-700 border border-neutral-200 shadow-sm;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-neutral-50 border-neutral-300 shadow-md;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-neutral-600;
+  }
+
+  .btn-ghost:hover {
+    @apply bg-neutral-100 text-neutral-800;
+  }
 }
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  font-feature-settings: 'cv11', 'ss01';
-  font-variation-settings: 'opsz' 32;
-  line-height: 1.6;
-  color: var(--neutral-800);
-  background-color: var(--neutral-0);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+
+/* === INPUT SYSTEM === */
+@layer components {
+  .input {
+    @apply w-full border border-neutral-200 rounded-lg p-3 px-4 text-base leading-normal text-neutral-800 bg-neutral-0 transition-all duration-fast outline-none;
+  }
+
+  .input:focus {
+    @apply border-primary-500 shadow-outline-primary;
+  }
+
+  .input:disabled {
+    @apply bg-neutral-50 text-neutral-400 cursor-not-allowed;
+  }
+
+  .input-error {
+    @apply border-error-500;
+  }
+
+  .input-error:focus {
+    @apply border-error-500 shadow-outline-error;
+  }
+
+  /* Form fields optimisés */
+  .lexia-form-group {
+    @apply mb-4;
+  }
+
+  .lexia-label {
+    @apply block font-medium text-neutral-700 mb-1;
+  }
+
+  .lexia-textarea {
+    @apply min-h-[120px] resize-y;
+  }
+
+  /* States de validation */
+  .lexia-input-success {
+    @apply border-success-500;
+  }
+
+  .lexia-input-error {
+    @apply border-error-500;
+  }
+
+  .lexia-helper-text {
+    @apply text-sm mt-1;
+  }
+
+  .lexia-helper-success {
+    @apply text-success-600;
+  }
+
+  .lexia-helper-error {
+    @apply text-error-600;
+  }
 }
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+
+/* === CARD SYSTEM === */
+@layer components {
+  .card {
+    @apply bg-neutral-0 border border-neutral-200 rounded-xl overflow-hidden transition-all duration-normal;
+  }
+
+  .card-hover {
+    @apply cursor-pointer;
+  }
+
+  .card-hover:hover {
+    @apply border-neutral-300 shadow-lg -translate-y-px;
+  }
+
+  .card-body {
+    @apply p-6;
+  }
+
+  .card-header {
+    @apply p-6 border-b border-neutral-200;
+  }
+
+  .card-footer {
+    @apply p-6 border-t border-neutral-200 bg-neutral-50;
+  }
 }
-/* Typography */
-.heading-1 {
-  font-size: 3rem;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.025em;
-  color: var(--neutral-900);
+
+/* === BADGE SYSTEM === */
+@layer components {
+  .badge {
+    @apply inline-flex items-center gap-1 p-1 px-2 rounded-full text-xs font-medium leading-tight;
+  }
+
+  .badge-primary {
+    @apply bg-primary-100 text-primary-700;
+  }
+
+  .badge-success {
+    @apply bg-success-50 text-success-600;
+  }
+
+  .badge-warning {
+    @apply bg-warning-50 text-warning-600;
+  }
+
+  .badge-error {
+    @apply bg-error-50 text-error-600;
+  }
 }
-.heading-2 {
-  font-size: 2.25rem;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  color: var(--neutral-900);
+
+/* === ALERT SYSTEM === */
+@layer components {
+  .lexia-alert {
+    @apply p-4 rounded-md border-l-4;
+  }
+
+  .lexia-alert-success {
+    @apply lexia-alert bg-success-50 border-success-500 text-success-700;
+  }
+
+  .lexia-alert-warning {
+    @apply lexia-alert bg-warning-50 border-warning-500 text-warning-700;
+  }
+
+  .lexia-alert-error {
+    @apply lexia-alert bg-error-50 border-error-500 text-error-700;
+  }
+
+  .lexia-alert-info {
+    @apply lexia-alert bg-primary-50 border-primary-500 text-primary-700;
+  }
 }
-.heading-3 {
-  font-size: 1.875rem;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.015em;
-  color: var(--neutral-800);
+
+/* === NAVIGATION === */
+@layer components {
+  .lexia-nav-link {
+    @apply inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200;
+  }
+
+  .lexia-nav-link-active {
+    @apply lexia-nav-link border-primary-500 text-primary-600;
+  }
+
+  .lexia-nav-link-inactive {
+    @apply lexia-nav-link border-transparent text-neutral-500 hover:border-neutral-300 hover:text-neutral-700;
+  }
 }
-.heading-4 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--neutral-800);
+
+/* === LAYOUT UTILITIES === */
+@layer components {
+  .container {
+    @apply w-full max-w-screen-xl mx-auto px-4;
+  }
+
+  .container-sm {
+    @apply max-w-screen-sm;
+  }
+
+  .container-md {
+    @apply max-w-screen-md;
+  }
+
+  .container-lg {
+    @apply max-w-screen-lg;
+  }
+
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+
+  .flex-between {
+    @apply flex items-center justify-between;
+  }
+
+  .absolute-center {
+    @apply absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
+  }
 }
-.body-large {
-  font-size: 1.125rem;
-  line-height: 1.7;
-  color: var(--neutral-700);
+
+/* === PROGRESS INDICATOR === */
+@layer components {
+  .lexia-progress-bar {
+    @apply w-full h-2 bg-neutral-200 rounded-full overflow-hidden;
+  }
+
+  .lexia-progress-fill {
+    @apply h-full bg-primary-500 transition-all duration-normal;
+  }
 }
-.body-normal {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--neutral-600);
+
+/* === TOOLTIPS === */
+@layer components {
+  .lexia-tooltip {
+    @apply relative inline-block;
+  }
+
+  .lexia-tooltip-content {
+    @apply invisible absolute z-10 p-2 text-sm text-white bg-neutral-900 rounded-md opacity-0 transition-opacity duration-normal;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: theme('spacing.2');
+  }
+
+  .lexia-tooltip:hover .lexia-tooltip-content {
+    @apply visible opacity-100;
+  }
 }
-.body-small {
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: var(--neutral-500);
+
+/* === MODAL SYSTEM === */
+@layer components {
+  .lexia-modal-backdrop {
+    @apply fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] backdrop-blur-sm;
+  }
+
+  .lexia-modal {
+    @apply bg-neutral-0 rounded-xl shadow-xl max-w-lg w-11/12 max-h-[90vh] overflow-y-auto animate-[modalSlideIn_0.3s_ease-out];
+  }
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(theme('spacing.5'));
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
-.caption {
-  font-size: 0.75rem;
-  line-height: 1.4;
-  color: var(--neutral-400);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+
+/* === TABLES === */
+@layer components {
+  .lexia-table {
+    @apply min-w-full divide-y divide-neutral-200;
+  }
+
+  .lexia-table-header {
+    @apply bg-neutral-50;
+  }
+
+  .lexia-table-header-cell {
+    @apply px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider;
+  }
+
+  .lexia-table-body {
+    @apply bg-neutral-0 divide-y divide-neutral-200;
+  }
+
+  .lexia-table-row {
+    @apply hover:bg-neutral-50;
+  }
+
+  .lexia-table-cell {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-neutral-500;
+  }
 }
-/* Button System */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  border: none;
-  border-radius: var(--radius-lg);
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  text-decoration: none;
-  white-space: nowrap;
-  user-select: none;
-  outline: none;
-  position: relative;
-  overflow: hidden;
+
+/* === LOADING STATES === */
+@layer components {
+  .loading { /* Already defined above, keeping for consistency with previous changes if used */
+    @apply opacity-60 pointer-events-none;
+  }
+
+  .spinner { /* Already defined above, keeping for consistency with previous changes if used */
+    @apply w-6 h-6 border-2 border-neutral-200 border-t-primary-500 rounded-full animate-spin;
+  }
+
+  .lexia-loading {
+    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500;
+  }
 }
-.btn:focus-visible {
-  outline: 2px solid var(--primary-500);
-  outline-offset: 2px;
+
+/* === FILE UPLOAD === */
+@layer components {
+  .lexia-file-upload {
+    @apply block w-full text-sm text-neutral-500
+      file:mr-4 file:py-2 file:px-4
+      file:rounded-md file:border-0
+      file:text-sm file:font-semibold
+      file:bg-primary-50 file:text-primary-700
+      hover:file:bg-primary-100;
+  }
 }
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
+
+/* === PAGINATION === */
+@layer components {
+  .lexia-pagination {
+    @apply relative z-0 inline-flex rounded-md shadow-sm -space-x-px;
+  }
+
+  .lexia-pagination-button {
+    @apply relative inline-flex items-center px-2 py-2 border border-neutral-300 bg-neutral-0 text-sm font-medium text-neutral-500 hover:bg-neutral-50;
+  }
+
+  .lexia-pagination-button-active {
+    @apply z-10 bg-primary-50 border-primary-500 text-primary-600;
+  }
 }
-/* Button Sizes */
-.btn-sm {
-  height: 2.25rem;
-  padding: 0 var(--space-3);
-  font-size: 0.875rem;
+
+/* === FILTERS === */
+@layer components {
+  .lexia-filter-button {
+    @apply px-3 py-2 rounded-md text-sm font-medium;
+  }
+
+  .lexia-filter-button-active {
+    @apply bg-primary-100 text-primary-700;
+  }
+
+  .lexia-filter-button-inactive {
+    @apply bg-neutral-100 text-neutral-700 hover:bg-neutral-200;
+  }
 }
-.btn-md {
-  height: 2.75rem;
-  padding: 0 var(--space-4);
-  font-size: 1rem;
-}
-.btn-lg {
-  height: 3.25rem;
-  padding: 0 var(--space-6);
-  font-size: 1.125rem;
-}
-/* Button Variants */
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
-  color: white;
-  box-shadow: var(--shadow-md);
-}
-.btn-primary:hover {
-  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-1px);
-}
-.btn-secondary {
-  background: var(--neutral-0);
-  color: var(--neutral-700);
-  border: 1px solid var(--neutral-200);
-  box-shadow: var(--shadow-sm);
-}
-.btn-secondary:hover {
-  background: var(--neutral-50);
-  border-color: var(--neutral-300);
-  box-shadow: var(--shadow-md);
-}
-.btn-ghost {
-  background: transparent;
-  color: var(--neutral-600);
-}
-.btn-ghost:hover {
-  background: var(--neutral-100);
-  color: var(--neutral-800);
-}
-/* Input System */
-.input {
-  width: 100%;
-  border: 1px solid var(--neutral-200);
-  border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-4);
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--neutral-800);
-  background: var(--neutral-0);
-  transition: all var(--transition-fast);
-  outline: none;
-}
-.input:focus {
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px var(--primary-100);
-}
-.input:disabled {
-  background: var(--neutral-50);
-  color: var(--neutral-400);
-  cursor: not-allowed;
-}
-.input-error {
-  border-color: var(--error-500);
-}
-.input-error:focus {
-  border-color: var(--error-500);
-  box-shadow: 0 0 0 3px var(--error-50);
-}
-/* Card System */
-.card {
-  background: var(--neutral-0);
-  border: 1px solid var(--neutral-200);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  transition: all var(--transition-normal);
-}
-.card-hover {
-  cursor: pointer;
-}
-.card-hover:hover {
-  border-color: var(--neutral-300);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-.card-body {
-  padding: var(--space-6);
-}
-.card-header {
-  padding: var(--space-6);
-  border-bottom: 1px solid var(--neutral-200);
-}
-.card-footer {
-  padding: var(--space-6);
-  border-top: 1px solid var(--neutral-200);
-  background: var(--neutral-50);
-}
-/* Badge System */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1.2;
-}
-.badge-primary {
-  background: var(--primary-100);
-  color: var(--primary-700);
-}
-.badge-success {
-  background: var(--success-50);
-  color: var(--success-600);
-}
-.badge-warning {
-  background: var(--warning-50);
-  color: var(--warning-600);
-}
-.badge-error {
-  background: var(--error-50);
-  color: var(--error-600);
-}
-/* Loading States */
-.loading {
-  opacity: 0.6;
-  pointer-events: none;
-}
-.spinner {
-  width: 1.5rem;
-  height: 1.5rem;
-  border: 2px solid var(--neutral-200);
-  border-top: 2px solid var(--primary-500);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
+
+/* === KEYFRAMES === */
+/* Animations utilisées par les utilitaires Tailwind */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
-/* Animations */
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(theme('spacing.2')); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(-16px); }
+  from { opacity: 0; transform: translateX(theme('spacing.4')); }
   to { opacity: 1; transform: translateX(0); }
 }
+
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-.animate-slide-in {
-  animation: slideIn 0.3s ease-out forwards;
-}
-.animate-scale-in {
-  animation: scaleIn 0.2s ease-out forwards;
-}
-/* Layout Utilities */
-.container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--space-4);
-}
-.container-sm {
-  max-width: 640px;
-}
-.container-md {
-  max-width: 768px;
-}
-.container-lg {
-  max-width: 1024px;
-}
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.flex-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.absolute-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-/* Responsive Design */
-@media (max-width: 768px) {
-  .container {
-    padding: 0 var(--space-3);
+
+/* === UTILITIES === */
+@layer utilities {
+  .animate-fade-in {
+    @apply animate-[fadeIn_0.3s_ease-out_forwards];
   }
-  
-  .heading-1 {
-    font-size: 2.25rem;
+
+  .animate-slide-in {
+    @apply animate-[slideIn_0.3s_ease-out_forwards];
   }
-  
-  .heading-2 {
-    font-size: 1.875rem;
+
+  .animate-scale-in {
+    @apply animate-[scaleIn_0.2s_ease-out_forwards];
   }
-  
-  .heading-3 {
-    font-size: 1.5rem;
+
+  .sr-only {
+    @apply sr-only;
+  }
+
+  .truncate {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent;
+  }
+
+  /* Custom shadow for focus states (used by inputs) */
+  .shadow-outline-primary {
+    box-shadow: 0 0 0 3px theme('colors.primary.200');
+  }
+
+  .shadow-outline-error {
+    box-shadow: 0 0 0 3px theme('colors.error.200');
+  }
+
+  /* Responsive Design - Ajouté ici car @screen est un utilitaire */
+  @screen md {
+    .container {
+      @apply px-3;
+    }
+
+    .heading-1 {
+      @apply text-4xl;
+    }
+
+    .heading-2 {
+      @apply text-3xl;
+    }
+
+    .heading-3 {
+      @apply text-2xl;
+    }
   }
 }
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--neutral-100);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--neutral-300);
-  border-radius: var(--radius-full);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--neutral-400);
-}
-/* Selection Styling */
-::selection {
-  background: var(--primary-200);
-  color: var(--primary-800);
-}
-/* Focus Management */
-.focus-ring {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-}
-.focus-ring:focus-visible {
-  outline: 2px solid var(--primary-500);
-}
-/* Utility Classes */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.gradient-text {
-  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-@import "./styles/lexia-design-system.css";
