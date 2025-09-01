@@ -55,7 +55,7 @@ api.interceptors.response.use(
       localStorage.removeItem('refreshToken');
       window.location.href = '/login';
       return Promise.reject(error);
-    }
+      const API_BASE_URL = (API_URL.replace(/\/$/, '')).replace(/\/api$/i, '');
 
     // Queue to handle multiple 401s while refreshing
     if (!api._isRefreshing) {
@@ -65,8 +65,8 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
 
       // Attempt refresh
-      return api.post('/auth/refresh-token', { refreshToken })
-        .then((res) => {
+      const api = axios.create({
+        baseURL: `${API_BASE_URL}/api`,
           const newToken = res.data?.token;
           if (newToken) {
             localStorage.setItem('token', newToken);
@@ -153,11 +153,11 @@ export const API_CONFIG = {
     logout: '/api/auth/logout',
     refreshToken: '/api/auth/refresh-token',
     forgotPassword: '/api/auth/forgot-password',
-    resetPassword: '/api/auth/reset-password',
-    verifyEmail: '/api/auth/verify-email',
-    
-    // User endpoints
-    profile: '/api/users/profile',
+      export const buildApiUrl = (endpoint) => {
+        if (typeof endpoint === 'function') {
+          return (...args) => `${API_BASE_URL}/api${endpoint(...args)}`;
+        }
+        return `${API_BASE_URL}/api${endpoint}`;
     updateProfile: '/api/users/profile',
     
   // VAE endpoints
