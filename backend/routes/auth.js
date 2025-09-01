@@ -33,48 +33,65 @@ try {
  */
 router.post('/register', async (req, res) => {
   try {
-    // Accepte les formats frontend (firstName/lastName) ou legacy (prenom/nom) ou name
-    let { email, password, firstName, lastName, prenom, nom, name } = req.body;
+    // Accepte plusieurs variantes de noms fournis par le frontend
+    let {
+      email, password,
+      firstName, lastName, prenom, nom, name,
+      firstname, lastname, first_name, last_name, fullName, fullname
+    } = req.body;
+
+    // Normalize email if present
+    let finalEmail = typeof email === 'string' ? email.trim().toLowerCase() : undefined;
 
     // Mappage des champs frontend vers backend
-    let finalFirstName = firstName || prenom;
-    let finalLastName = lastName || nom;
+    let finalFirstName = firstName || firstname || first_name || prenom;
+    let finalLastName = lastName || lastname || last_name || nom;
 
-    // Si "name" est fourni, on le split
-    if (!finalFirstName && !finalLastName && name) {
-      const nameParts = name.trim().split(/\s+/);
+    // Si "name" / "fullName" est fourni, on le split
+    const nameSource = name || fullName || fullname;
+    if (!finalFirstName && !finalLastName && typeof nameSource === 'string' && nameSource.trim()) {
+      const nameParts = nameSource.trim().split(/\s+/);
       finalFirstName = nameParts[0];
       finalLastName = nameParts.slice(1).join(' ') || nameParts[0];
     }
 
-    // Validation des données
-    if (!email || !password || !finalFirstName || !finalLastName) {
-      console.warn('Validation failed for /api/auth/register - missing fields', {
-        body: req.body,
-        missing: {
-          email: !email,
-          password: !password,
-          firstName: !finalFirstName,
-          lastName: !finalLastName
+    // Trim pour éviter des valeurs composées uniquement d'espaces
+    if (typeof finalFirstName === 'string') finalFirstName = finalFirstName.trim() || undefined;
+    if (typeof finalLastName === 'string') finalLastName = finalLastName.trim() || undefined;
+
+    // Validation des données (renvoie détails pour debug)
+    if (!finalEmail || !password || !finalFirstName || !finalLastName) {
+      const missing = {
+        email: !finalEmail,
+        password: !password,
+        firstName: !finalFirstName,
+        lastName: !finalLastName
+      };
+      console.warn('Validation failed for /api/auth/register - missing fields', { body: req.body, missing });
+      return res.status(400).json({
+        success: false,
+        message: 'Email, mot de passe, prénom et nom sont requis',
+        missing,
+        received: {
+          email: finalEmail || null,
+          firstName: finalFirstName || null,
+          lastName: finalLastName || null
         }
       });
+    }
+
+    // Validation de l'email (plus tolérante pour TLD longs)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(finalEmail)) {
+      console.warn('Validation failed for /api/auth/register - invalid email', { body: req.body, receivedEmail: finalEmail });
       return res.status(400).json({
         success: false,
-        message: 'Email, mot de passe, prénom et nom sont requis'
+        message: 'Veuillez entrer un email valide',
+        received: { email: finalEmail }
       });
     }
 
-    // Validation de l'email
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(email)) {
-      console.warn('Validation failed for /api/auth/register - invalid email', { body: req.body });
-      return res.status(400).json({
-        success: false,
-        message: 'Veuillez entrer un email valide'
-      });
-    }
-
-    if (password.length < 8) {
+    if (typeof password !== 'string' || password.length < 8) {
       console.warn('Validation failed for /api/auth/register - short password', { body: req.body });
       return res.status(400).json({
         success: false,
@@ -82,10 +99,10 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Vérifier si l'utilisateur existe déjà
-    let user = await User.findOne({ email: email.toLowerCase() });
+    // Vérifier si l'utilisateur existe déjà (utilise finalEmail normalisé)
+    let user = await User.findOne({ email: finalEmail });
     if (user) {
-      console.info('Attempt to register with existing email', { email: email });
+      console.info('Attempt to register with existing email', { email: finalEmail });
       return res.status(400).json({
         success: false,
         message: 'Un utilisateur avec cet email existe déjà'
@@ -96,9 +113,9 @@ router.post('/register', async (req, res) => {
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
     const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
 
-    // Créer un nouvel utilisateur
+    // Créer un nouvel utilisateur (utilise finalEmail et finalFirstName/LastName)
     user = new User({
-      email,
+      email: finalEmail,
       password,
       firstName: finalFirstName,
       lastName: finalLastName,
@@ -124,7 +141,7 @@ router.post('/register', async (req, res) => {
     await user.save();
 
     // Envoyer l'email de vérification
-    await sendEmail(email, 'verification', emailVerificationToken);
+    await sendEmail(finalEmail, 'verification', emailVerificationToken);
 
     // Générer JWT
     const payload = {
