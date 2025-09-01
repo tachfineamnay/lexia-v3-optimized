@@ -1,10 +1,10 @@
 import axios from 'axios';
 
 // Configuration API centralisée
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 // Enlever le slash final s'il existe
-const API_BASE_URL = API_URL.replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 // Logs de debug plus détaillés
 console.log('🔗 Configuration API:');
@@ -13,9 +13,9 @@ console.log('  - API_BASE_URL:', API_BASE_URL);
 console.log('  - Environment:', import.meta.env.MODE);
 console.log('  - Base URL complète:', `${API_BASE_URL}/api`);
 
-// Create axios instance
+// Create axios instance (baseURL without '/api' suffix — endpoints include '/api' prefix)
 const api = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
+  baseURL: `${API_BASE_URL}`,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -41,13 +41,65 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    const originalRequest = error.config;
+
+    // If no response or not 401, just reject
+    if (!error.response || error.response.status !== 401) {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+
+    // Prevent infinite loop
+    if (originalRequest._retry) {
+      // Already retried, force logout
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/login';
+      return Promise.reject(error);
+    }
+
+    // Queue to handle multiple 401s while refreshing
+    if (!api._isRefreshing) {
+      api._isRefreshing = true;
+      api._refreshSubscribers = [];
+
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      // Attempt refresh
+      return api.post('/auth/refresh-token', { refreshToken })
+        .then((res) => {
+          const newToken = res.data?.token;
+          if (newToken) {
+            localStorage.setItem('token', newToken);
+            api._isRefreshing = false;
+            api._refreshSubscribers.forEach((cb) => cb(null, newToken));
+            api._refreshSubscribers = [];
+            // retry original request with new token
+            originalRequest._retry = true;
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return api(originalRequest);
+          }
+          throw new Error('Refresh failed');
+        })
+        .catch((refreshErr) => {
+          api._isRefreshing = false;
+          api._refreshSubscribers.forEach((cb) => cb(refreshErr));
+          api._refreshSubscribers = [];
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/login';
+          return Promise.reject(refreshErr);
+        });
+    }
+
+    // If refresh already in progress, return a promise that resolves when refreshed
+    return new Promise((resolve, reject) => {
+      api._refreshSubscribers.push((err, newToken) => {
+        if (err) return reject(err);
+        originalRequest._retry = true;
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        resolve(api(originalRequest));
+      });
+    });
   }
 );
 
@@ -95,9 +147,9 @@ export const getAuthHeaders = () => {
 export const API_CONFIG = {
   baseURL: API_BASE_URL,
   endpoints: {
-    // Auth endpoints
-    login: '/api/auth/login',
-    register: '/api/auth/register',
+  // Auth endpoints
+  login: '/auth/login',
+  register: '/auth/register',
     logout: '/api/auth/logout',
     refreshToken: '/api/auth/refresh-token',
     forgotPassword: '/api/auth/forgot-password',
@@ -108,15 +160,15 @@ export const API_CONFIG = {
     profile: '/api/users/profile',
     updateProfile: '/api/users/profile',
     
-    // VAE endpoints
-    vaeList: '/api/vae',
+  // VAE endpoints
+  vaeList: '/api/vae/list',
     vaeCreate: '/api/vae',
     vaeDetail: (id) => `/api/vae/${id}`,
     vaeUpdate: (id) => `/api/vae/${id}`,
     vaeDelete: (id) => `/api/vae/${id}`,
     
-    // Document endpoints
-    uploadDocument: '/api/documents/upload',
+  // Document endpoints
+  uploadDocument: '/api/documents',
     documentList: '/api/documents',
     documentDelete: (id) => `/api/documents/${id}`,
     

@@ -185,7 +185,7 @@ const AppContent = () => {
                 }
               />
               <Route
-                path="/vae-creation"
+                path="/vae/create"
                 element={
                   <ProtectedRoute>
                     <VAECreation />

@@ -11,6 +11,19 @@ if (typeof authMiddleware !== 'function') {
   console.error('authModule contient:', Object.keys(authModule));
 }
 
+// Liste des VAE (GET /api/vae) avec pagination simple
+router.get('/', authMiddleware || ((req, res, next) => next()), async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    // TODO: remplacer par une vraie requête en BD
+    return res.json({ success: true, message: 'Liste VAE', data: [], page, limit });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
 // Routes VAE avec vérification
 router.get('/list', authMiddleware || ((req, res, next) => next()), (req, res) => {
   res.json({ 

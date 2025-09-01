@@ -36,9 +36,13 @@ app.use(helmet());
 
 // Configuration CORS
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: process.env.CORS_ORIGIN?.split(',') || ['https://app.ialexia.fr'],
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
   credentials: true
 }));
+// Écoute les requêtes OPTIONS
+app.options('*', (_req, res) => res.sendStatus(204));
 
 // Parsing JSON
 app.use(express.json({ limit: '10mb' }));
