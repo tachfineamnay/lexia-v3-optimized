@@ -148,8 +148,8 @@ export const API_CONFIG = {
   baseURL: API_BASE_URL,
   endpoints: {
   // Auth endpoints
-  login: '/auth/login',
-  register: '/auth/register',
+  login: '/api/auth/login',
+  register: '/api/auth/register',
     logout: '/api/auth/logout',
     refreshToken: '/api/auth/refresh-token',
     forgotPassword: '/api/auth/forgot-password',
