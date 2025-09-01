@@ -140,10 +140,16 @@ router.post('/register', async (req, res) => {
     };
     await user.save();
 
-    // Envoyer l'email de vérification
-    await sendEmail(finalEmail, 'verification', emailVerificationToken);
+    // Envoyer l'email de vérification (ne doit pas casser l'inscription si échoue)
+    let emailSendError = null;
+    try {
+      await sendEmail(finalEmail, 'verification', emailVerificationToken);
+    } catch (e) {
+      console.error('Failed to send verification email:', e && e.message ? e.message : e);
+      emailSendError = e && e.message ? e.message : String(e);
+    }
 
-    // Générer JWT
+    // Générer JWT (si les secrets manquent, évitez un throw 500)
     const payload = {
       user: {
         id: user.id,
@@ -151,25 +157,36 @@ router.post('/register', async (req, res) => {
         role: user.role
       }
     };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2h' });
-
-    // Générer refresh token
-    const refreshToken = jwt.sign(
-      { userId: user.id },
-      process.env.REFRESH_TOKEN_SECRET || 'refreshsecretfallback',
-      { expiresIn: '7d' }
-    );
+    let token = null;
+    let refreshToken = null;
+    let tokenError = null;
+    try {
+      const jwtSecret = process.env.JWT_SECRET;
+      const refreshSecret = process.env.REFRESH_TOKEN_SECRET || 'refreshsecretfallback';
+      if (!jwtSecret) console.warn('JWT_SECRET not defined; using fallback for token generation (not recommended)');
+      token = jwt.sign(payload, jwtSecret || 'jwtfallbacksecret', { expiresIn: '2h' });
+      refreshToken = jwt.sign({ userId: user.id }, refreshSecret, { expiresIn: '7d' });
+    } catch (e) {
+      console.error('Token generation failed:', e && e.message ? e.message : e);
+      tokenError = e && e.message ? e.message : String(e);
+    }
 
     // Retourner les informations de l'utilisateur sans le mot de passe
     const userProfile = user.getProfile();
 
-    res.status(201).json({
+    const response = {
       success: true,
       message: 'Utilisateur créé avec succès. Veuillez vérifier votre email pour activer votre compte.',
-      token,
-      refreshToken,
       user: userProfile
-    });
+    };
+    if (token) response.token = token;
+    if (refreshToken) response.refreshToken = refreshToken;
+    const warnings = [];
+    if (emailSendError) warnings.push({ type: 'email', message: emailSendError });
+    if (tokenError) warnings.push({ type: 'token', message: tokenError });
+    if (warnings.length) response.warnings = warnings;
+
+    res.status(201).json(response);
   } catch (err) {
     // If mongoose validation error, return 400 with details to help debugging
     if (err && err.name === 'ValidationError') {
