@@ -49,6 +49,15 @@ router.post('/register', async (req, res) => {
 
     // Validation des données
     if (!email || !password || !finalFirstName || !finalLastName) {
+      console.warn('Validation failed for /api/auth/register - missing fields', {
+        body: req.body,
+        missing: {
+          email: !email,
+          password: !password,
+          firstName: !finalFirstName,
+          lastName: !finalLastName
+        }
+      });
       return res.status(400).json({
         success: false,
         message: 'Email, mot de passe, prénom et nom sont requis'
@@ -58,6 +67,7 @@ router.post('/register', async (req, res) => {
     // Validation de l'email
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
+      console.warn('Validation failed for /api/auth/register - invalid email', { body: req.body });
       return res.status(400).json({
         success: false,
         message: 'Veuillez entrer un email valide'
@@ -65,6 +75,7 @@ router.post('/register', async (req, res) => {
     }
 
     if (password.length < 8) {
+      console.warn('Validation failed for /api/auth/register - short password', { body: req.body });
       return res.status(400).json({
         success: false,
         message: 'Le mot de passe doit contenir au moins 8 caractères'
@@ -74,6 +85,7 @@ router.post('/register', async (req, res) => {
     // Vérifier si l'utilisateur existe déjà
     let user = await User.findOne({ email: email.toLowerCase() });
     if (user) {
+      console.info('Attempt to register with existing email', { email: email });
       return res.status(400).json({
         success: false,
         message: 'Un utilisateur avec cet email existe déjà'
@@ -142,11 +154,25 @@ router.post('/register', async (req, res) => {
       user: userProfile
     });
   } catch (err) {
-    console.error('Erreur d\'inscription:', err.message);
+    // If mongoose validation error, return 400 with details to help debugging
+    if (err && err.name === 'ValidationError') {
+      const errors = Object.keys(err.errors || {}).reduce((acc, key) => {
+        acc[key] = err.errors[key].message;
+        return acc;
+      }, {});
+      console.warn('Mongoose validation error on register:', errors, { body: req.body });
+      return res.status(400).json({
+        success: false,
+        message: 'Validation des données échouée',
+        errors
+      });
+    }
+
+    console.error('Erreur d\'inscription:', err && err.message ? err.message : err);
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (err && err.message ? err.message : err) : undefined
     });
   }
 });
