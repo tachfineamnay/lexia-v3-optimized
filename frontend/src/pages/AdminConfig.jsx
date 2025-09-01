@@ -36,6 +36,7 @@ const AdminConfig = () => {
   const [configs, setConfigs] = useState({});
   const [template, setTemplate] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState({});
   const [showPasswords, setShowPasswords] = useState({});
@@ -46,7 +47,8 @@ const AdminConfig = () => {
   }, [selectedCategory]);
 
   const loadCategoryConfig = async (category) => {
-    setLoading(true);
+  setLoading(true);
+  setError(null);
     try {
       const response = await api.get(`/config/${category}`);
       const configData = response.data.configs || [];
@@ -68,10 +70,13 @@ const AdminConfig = () => {
       setConfigs(configObj);
       setTemplate(templateData);
     } catch (error) {
-      setToast({
-        type: 'error',
-        message: `Erreur lors du chargement: ${error.message}`
+      // Visible error state for admin-config
+      console.error('AdminConfig load error:', error);
+      setError({
+        status: error?.response?.status || 500,
+        message: error?.response?.data?.message || error.message || 'Erreur inconnue lors du chargement'
       });
+      setToast({ type: 'error', message: `Erreur lors du chargement: ${error.message}` });
     } finally {
       setLoading(false);
     }
@@ -365,6 +370,28 @@ const AdminConfig = () => {
                     className="flex justify-center py-20"
                   >
                     <LoadingSpinner size="lg" color="primary" text="Chargement de la configuration..." />
+                  </motion.div>
+                ) : error ? (
+                  <motion.div
+                    key="error"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="p-8 text-center bg-white/5 rounded-2xl border border-red-500/20"
+                  >
+                    <ExclamationTriangleIcon className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-white mb-2">Erreur</h3>
+                    <p className="text-gray-300 mb-4">{`Code ${error.status} — ${error.message}`}</p>
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        onClick={() => loadCategoryConfig(selectedCategory)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                      >Réessayer</button>
+                      <button
+                        onClick={() => setError(null)}
+                        className="px-4 py-2 bg-gray-700 text-white rounded-md"
+                      >Ignorer</button>
+                    </div>
                   </motion.div>
                 ) : (
                   <motion.div

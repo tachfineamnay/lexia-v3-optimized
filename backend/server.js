@@ -106,6 +106,14 @@ try {
   console.error('❌ Error loading dashboard routes:', err.message);
 }
 
+// Mount config routes (admin-only)
+try {
+  app.use('/api/config', require('./routes/config'));
+  console.log('✓ Config routes loaded');
+} catch (err) {
+  console.error('❌ Error loading config routes:', err.message);
+}
+
 // Route de santé
 app.get('/api/health', (req, res) => {
   const health = {
@@ -247,6 +255,7 @@ app.get('/api', (req, res) => {
       '/api/test',
       '/api/auth',
       '/api/users',
+  '/api/config',
       '/api/vae',
       '/api/documents',
       '/api/ai',
