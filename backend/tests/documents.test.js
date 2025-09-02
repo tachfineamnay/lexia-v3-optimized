@@ -1,4 +1,3 @@
-const { expect } = require('chai');
 const fs = require('fs').promises;
 const path = require('path');
 const documentGenerator = require('../services/documentGenerator');
@@ -51,64 +50,58 @@ describe('Document Generator Service', () => {
     it('devrait générer un document PDF valide', async () => {
       const result = await documentGenerator.generateDocument(mockDossier, 'pdf');
       
-      // Vérifier que le fichier existe
-      const stats = await fs.stat(result.filePath);
-      expect(stats.isFile()).to.be.true;
-      
-      // Vérifier la taille minimale (un PDF vide fait environ 1KB)
-      expect(stats.size).to.be.greaterThan(1024);
-      
-      // Vérifier la signature PDF (%PDF-)
-      const buffer = await fs.readFile(result.filePath);
-      expect(buffer.toString('ascii', 0, 5)).to.equal('%PDF-');
-      
-      // Vérifier le nom du fichier
-      expect(result.fileName).to.match(/^dossier-test-dossier-123\.pdf$/);
-      
-      // Vérifier le type MIME
-      expect(result.mimeType).to.equal('application/pdf');
+  // Vérifier que le fichier existe
+  const stats = await fs.stat(result.filePath);
+  expect(stats.isFile()).toBe(true);
+
+  // Vérifier la taille minimale (un PDF vide fait environ 1KB)
+  expect(stats.size).toBeGreaterThan(1024);
+
+  // Vérifier la signature PDF (%PDF-)
+  const buffer = await fs.readFile(result.filePath);
+  expect(buffer.toString('ascii', 0, 5)).toBe('%PDF-');
+
+  // Vérifier le nom du fichier
+  expect(result.fileName).toMatch(/^dossier-test-dossier-123\.pdf$/);
+
+  // Vérifier le type MIME
+  expect(result.mimeType).toBe('application/pdf');
     });
 
     it('devrait générer un document DOCX valide', async () => {
       const result = await documentGenerator.generateDocument(mockDossier, 'docx');
       
-      // Vérifier que le fichier existe
-      const stats = await fs.stat(result.filePath);
-      expect(stats.isFile()).to.be.true;
-      
-      // Vérifier la taille minimale (un DOCX vide fait environ 10KB)
-      expect(stats.size).to.be.greaterThan(10240);
-      
-      // Vérifier la signature DOCX (PK\x03\x04)
-      const buffer = await fs.readFile(result.filePath);
-      expect(buffer.toString('hex', 0, 4)).to.equal('504b0304');
-      
-      // Vérifier le nom du fichier
-      expect(result.fileName).to.match(/^dossier-test-dossier-123\.docx$/);
-      
-      // Vérifier le type MIME
-      expect(result.mimeType).to.equal('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  // Vérifier que le fichier existe
+  const stats = await fs.stat(result.filePath);
+  expect(stats.isFile()).toBe(true);
+
+  // Vérifier la taille minimale (un DOCX vide fait environ 10KB)
+  expect(stats.size).toBeGreaterThan(10240);
+
+  // Vérifier la signature DOCX (PK\x03\x04)
+  const buffer = await fs.readFile(result.filePath);
+  expect(buffer.toString('hex', 0, 4)).toBe('504b0304');
+
+  // Vérifier le nom du fichier
+  expect(result.fileName).toMatch(/^dossier-test-dossier-123\.docx$/);
+
+  // Vérifier le type MIME
+  expect(result.mimeType).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     });
 
     it('devrait gérer les erreurs de génération', async () => {
       // Tester avec un dossier invalide
       const invalidDossier = { ...mockDossier, content: null };
       
-      try {
-        await documentGenerator.generateDocument(invalidDossier, 'pdf');
-        expect.fail('Devrait lever une erreur');
-      } catch (error) {
-        expect(error.message).to.include('Erreur lors de la génération du document');
-      }
+      await expect(documentGenerator.generateDocument(invalidDossier, 'pdf'))
+        .rejects
+        .toThrow(/Erreur lors de la génération du document/);
     });
 
     it('devrait rejeter les formats invalides', async () => {
-      try {
-        await documentGenerator.generateDocument(mockDossier, 'invalid');
-        expect.fail('Devrait lever une erreur');
-      } catch (error) {
-        expect(error.message).to.include('Format de document invalide');
-      }
+      await expect(documentGenerator.generateDocument(mockDossier, 'invalid'))
+        .rejects
+        .toThrow(/Format de document invalide/);
     });
   });
 });

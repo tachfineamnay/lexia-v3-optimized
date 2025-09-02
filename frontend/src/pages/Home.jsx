@@ -17,12 +17,12 @@ function Home() {
           </p>
           <div className="mt-10 max-w-sm mx-auto flex flex-col sm:flex-row sm:justify-center gap-3">
             {isAuthenticated ? (
-              <Link
-                to="/vae-creation"
-                className="px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-blue-50 shadow-md transition-all"
-              >
-                Commencer un dossier
-              </Link>
+                <Link
+                  to="/vae/create"
+                  className="px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-blue-50 shadow-md transition-all"
+                >
+                  Commencer un dossier
+                </Link>
             ) : (
               <>
                 <Link
@@ -107,12 +107,12 @@ function Home() {
             </p>
             <div className="mt-8">
               {isAuthenticated ? (
-                <Link
-                  to="/vae-creation"
-                  className="px-6 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 shadow-md transition-all"
-                >
-                  Commencer maintenant
-                </Link>
+                  <Link
+                    to="/vae/create"
+                    className="px-6 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 shadow-md transition-all"
+                  >
+                    Commencer maintenant
+                  </Link>
               ) : (
                 <Link
                   to="/register"

@@ -22,7 +22,8 @@ export const AuthProvider = ({ children }) => {
       
       try {
         const res = await api.get('/auth/me');
-        setUser(res.data);
+  // API returns { success: true, user: { ... } }
+  setUser(res.data?.user || res.data);
         setError(null);
       } catch (err) {
         setError(err.response?.data?.message || 'Authentication error');

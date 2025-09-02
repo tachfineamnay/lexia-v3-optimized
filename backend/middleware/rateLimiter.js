@@ -54,7 +54,8 @@ const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 tentatives maximum
   message: {
-    error: 'Trop de tentatives de connexion. Veuillez réessayer dans 15 minutes.'
+    success: false,
+    message: 'Trop de tentatives de connexion. Veuillez réessayer dans 15 minutes.'
   },
   standardHeaders: true,
   legacyHeaders: false
@@ -65,7 +66,8 @@ const forgotPasswordLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 heure
   max: 3, // 3 tentatives maximum
   message: {
-    error: 'Trop de demandes de réinitialisation. Veuillez réessayer dans 1 heure.'
+    success: false,
+    message: 'Trop de demandes de réinitialisation. Veuillez réessayer dans 1 heure.'
   },
   standardHeaders: true,
   legacyHeaders: false

@@ -63,6 +63,12 @@ function Register() {
     }
     
     setErrors(newErrors);
+    // focus the first error field for accessibility
+    if (Object.keys(newErrors).length) {
+      const firstKey = Object.keys(newErrors)[0];
+      const el = document.getElementById(firstKey);
+      if (el && typeof el.focus === 'function') el.focus();
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -212,12 +218,12 @@ function Register() {
           className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 shadow-2xl"
         >
           {/* Error Alert */}
-          {errors.auth && (
+      {errors.auth && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6"
-              role="alert"
+        role="alert"
             >
               <div className="flex items-start gap-3">
                 <ExclamationTriangleIcon className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
@@ -243,6 +249,8 @@ function Register() {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
+                    aria-invalid={!!errors.firstName}
+                    aria-describedby={errors.firstName ? 'firstName-error' : undefined}
                     className={`w-full pl-10 pr-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 ${
                       errors.firstName ? 'border-red-500 focus:ring-red-500' : 'border-white/10 hover:border-white/20'
                     }`}
@@ -252,9 +260,11 @@ function Register() {
                 </div>
                 {errors.firstName && (
                   <motion.p
+                    id="firstName-error"
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-2 text-sm text-red-400"
+                    role="alert"
                   >
                     {errors.firstName}
                   </motion.p>
@@ -275,6 +285,8 @@ function Register() {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
+                    aria-invalid={!!errors.lastName}
+                    aria-describedby={errors.lastName ? 'lastName-error' : undefined}
                     className={`w-full pl-10 pr-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 ${
                       errors.lastName ? 'border-red-500 focus:ring-red-500' : 'border-white/10 hover:border-white/20'
                     }`}
@@ -284,9 +296,11 @@ function Register() {
                 </div>
                 {errors.lastName && (
                   <motion.p
+                    id="lastName-error"
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-2 text-sm text-red-400"
+                    role="alert"
                   >
                     {errors.lastName}
                   </motion.p>
@@ -309,6 +323,8 @@ function Register() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? 'email-error' : undefined}
                   className={`w-full pl-10 pr-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 ${
                     errors.email ? 'border-red-500 focus:ring-red-500' : 'border-white/10 hover:border-white/20'
                   }`}
@@ -318,9 +334,11 @@ function Register() {
               </div>
               {errors.email && (
                 <motion.p
+                  id="email-error"
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-2 text-sm text-red-400"
+                  role="alert"
                 >
                   {errors.email}
                 </motion.p>
@@ -342,6 +360,8 @@ function Register() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? 'password-error' : undefined}
                   className={`w-full pl-10 pr-12 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 ${
                     errors.password ? 'border-red-500 focus:ring-red-500' : 'border-white/10 hover:border-white/20'
                   }`}
@@ -362,9 +382,11 @@ function Register() {
               </div>
               {errors.password && (
                 <motion.p
+                  id="password-error"
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-2 text-sm text-red-400"
+                  role="alert"
                 >
                   {errors.password}
                 </motion.p>
@@ -386,6 +408,8 @@ function Register() {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
+                  aria-invalid={!!errors.confirmPassword}
+                  aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
                   className={`w-full pl-10 pr-12 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200 ${
                     errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-white/10 hover:border-white/20'
                   }`}
@@ -406,9 +430,11 @@ function Register() {
               </div>
               {errors.confirmPassword && (
                 <motion.p
+                  id="confirmPassword-error"
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-2 text-sm text-red-400"
+                  role="alert"
                 >
                   {errors.confirmPassword}
                 </motion.p>
@@ -419,18 +445,17 @@ function Register() {
             <motion.button
               type="submit"
               disabled={isSubmitting}
+              aria-busy={isSubmitting}
+              aria-disabled={isSubmitting}
               className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent transition disabled:opacity-50 disabled:cursor-not-allowed"
               whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
               whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
             >
-              {isSubmitting ? (
-                <div className="flex items-center justify-center gap-2">
-                  <LoadingSpinner size="sm" color="white" />
-                  <span>Création...</span>
-                </div>
-              ) : (
-                'Créer mon compte'
-              )}
+              <div className="flex items-center justify-center gap-2">
+                <span className="sr-only">{isSubmitting ? 'Création en cours' : 'Créer mon compte'}</span>
+                {isSubmitting && <LoadingSpinner size="sm" color="white" />}
+                <span aria-hidden>{isSubmitting ? 'Création...' : 'Créer mon compte'}</span>
+              </div>
             </motion.button>
           </form>
           

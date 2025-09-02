@@ -97,7 +97,7 @@ function App() {
                   <FinalDossier />
                 </ProtectedRoute>
               } />
-              <Route path="/vae-creation" element={
+              <Route path="/vae/create" element={
                 <ProtectedRoute>
                   <VAECreation />
                 </ProtectedRoute>

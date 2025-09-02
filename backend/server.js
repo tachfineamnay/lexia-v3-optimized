@@ -36,9 +36,13 @@ app.use(helmet());
 
 // Configuration CORS
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: process.env.CORS_ORIGIN?.split(',') || ['https://app.ialexia.fr'],
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
   credentials: true
 }));
+// Écoute les requêtes OPTIONS
+app.options('*', (_req, res) => res.sendStatus(204));
 
 // Parsing JSON
 app.use(express.json({ limit: '10mb' }));
@@ -82,6 +86,13 @@ try {
 }
 
 try {
+  app.use('/api/questions', require('./routes/questions'));
+  console.log('✓ Questions routes loaded');
+} catch (err) {
+  console.error('❌ Error loading questions routes:', err.message);
+}
+
+try {
   app.use('/api/ai', require('./routes/ai'));
   console.log('✓ AI routes loaded');
 } catch (err) {
@@ -93,6 +104,14 @@ try {
   console.log('✓ Dashboard routes loaded');
 } catch (err) {
   console.error('❌ Error loading dashboard routes:', err.message);
+}
+
+// Mount config routes (admin-only)
+try {
+  app.use('/api/config', require('./routes/config'));
+  console.log('✓ Config routes loaded');
+} catch (err) {
+  console.error('❌ Error loading config routes:', err.message);
 }
 
 // Route de santé
@@ -140,22 +159,74 @@ if (missingEnvVars.length > 0) {
     .forEach(key => console.log(`  ${key}=${process.env[key]}`));
 }
 
-// Connexion à MongoDB
-const mongoUri = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/lexiav4';
-console.log('🔗 Attempting MongoDB connection to:', mongoUri.replace(/\/\/.*@/, '//***:***@'));
+// Connexion à MongoDB et démarrage du serveur seulement si exécuté directement
+if (require.main === module) {
+  const mongoUri = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/lexiav4';
+  console.log('🔗 Attempting MongoDB connection to:', mongoUri.replace(/\/\/.*@/, '//***:***@'));
 
-mongoose.connect(mongoUri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => {
-  console.log('✅ Connecté à MongoDB');
-  console.log('🔗 MongoDB connection state:', mongoose.connection.readyState);
-})
-.catch(err => {
-  console.error('❌ Erreur connexion MongoDB:', err.message);
-  console.log('🔄 Application will continue without database connection');
-});
+  mongoose.connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => {
+    console.log('✅ Connecté à MongoDB');
+    console.log('🔗 MongoDB connection state:', mongoose.connection.readyState);
+  })
+  .catch(err => {
+    console.error('❌ Erreur connexion MongoDB:', err.message);
+    console.log('🔄 Application will continue without database connection');
+  });
+
+  // Démarrage du serveur
+  const PORT = process.env.PORT || 5000;
+  const HOST = process.env.HOST || '0.0.0.0';
+
+  console.log('🚀 Starting LexiaV4 server...');
+  console.log('📊 Server configuration:');
+  console.log(`  - Port: ${PORT}`);
+  console.log(`  - Host: ${HOST}`);
+  console.log(`  - Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`  - CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
+  console.log('📞 Attempting to bind to address...');
+
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`🚀 Serveur LexiaV4 démarré sur ${HOST}:${PORT}`);
+    console.log(`📍 Environnement: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 Health check available at: http://${HOST}:${PORT}/api/health`);
+    console.log(`📋 API info available at: http://${HOST}:${PORT}/api`);
+    console.log(`🧪 Test endpoint available at: http://${HOST}:${PORT}/api/test`);
+    console.log('✅ Server is ready to accept connections!');
+  });
+
+  // Server error handling
+  server.on('error', (err) => {
+    console.error('🚨 Server error:', err);
+    if (err.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${PORT} is already in use`);
+    } else if (err.code === 'EADDRNOTAVAIL') {
+      console.error(`❌ Address ${HOST} is not available`);
+    }
+    process.exit(1);
+  });
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+      console.log('Process terminated');
+      process.exit(0);
+    });
+  });
+
+  process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully');
+    server.close(() => {
+      console.log('Process terminated');
+      process.exit(0);
+    });
+  });
+
+}
 
 // Create necessary directories
 const createDirectories = () => {
@@ -184,6 +255,7 @@ app.get('/api', (req, res) => {
       '/api/test',
       '/api/auth',
       '/api/users',
+  '/api/config',
       '/api/vae',
       '/api/documents',
       '/api/ai',
@@ -204,53 +276,6 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// Démarrage du serveur
-const PORT = process.env.PORT || 5000;
-const HOST = process.env.HOST || '0.0.0.0';
+// Note: Server startup is handled when this module is executed directly (see above).
 
-console.log('🚀 Starting LexiaV4 server...');
-console.log('📊 Server configuration:');
-console.log(`  - Port: ${PORT}`);
-console.log(`  - Host: ${HOST}`);
-console.log(`  - Environment: ${process.env.NODE_ENV || 'development'}`);
-console.log(`  - CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
-console.log('📞 Attempting to bind to address...');
-
-const server = app.listen(PORT, HOST, () => {
-  console.log(`🚀 Serveur LexiaV4 démarré sur ${HOST}:${PORT}`);
-  console.log(`📍 Environnement: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Health check available at: http://${HOST}:${PORT}/api/health`);
-  console.log(`📋 API info available at: http://${HOST}:${PORT}/api`);
-  console.log(`🧪 Test endpoint available at: http://${HOST}:${PORT}/api/test`);
-  console.log('✅ Server is ready to accept connections!');
-});
-
-// Server error handling
-server.on('error', (err) => {
-  console.error('🚨 Server error:', err);
-  if (err.code === 'EADDRINUSE') {
-    console.error(`❌ Port ${PORT} is already in use`);
-  } else if (err.code === 'EADDRNOTAVAIL') {
-    console.error(`❌ Address ${HOST} is not available`);
-  }
-  process.exit(1);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
-    process.exit(0);
-  });
-});
-
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
-    process.exit(0);
-  });
-});
-
-module.exports = app; 
+module.exports = app;

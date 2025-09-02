@@ -2,7 +2,8 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,jsx,ts,tsx,css}",
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./src/**/*.css",
   ],
   theme: {
     extend: {
@@ -81,8 +82,16 @@ export default {
         xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
         '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
       },
+      ringColor: ({ theme }) => ({
+        DEFAULT: theme('colors.primary.500'),
+        ...theme('colors'),
+      }),
+      ringOffsetColor: ({ theme }) => ({
+        DEFAULT: theme('colors.neutral.0'),
+        ...theme('colors'),
+      }),
       transitionTimingFunction: {
-        DEFAULT: 'cubic-bezier(0.4, 0, 0.2, 1)', // Default to ease-out-quad
+        DEFAULT: 'cubic-bezier(0.4, 0, 0.2, 1)',
         fast: 'cubic-bezier(0.4, 0, 0.2, 1)',
         normal: 'cubic-bezier(0.4, 0, 0.2, 1)',
         slow: 'cubic-bezier(0.4, 0, 0.2, 1)',
@@ -93,10 +102,9 @@ export default {
         slow: '500ms',
       },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
       },
     },
-    
   },
   plugins: [],
-} 
+}

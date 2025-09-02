@@ -12,18 +12,16 @@ let auth;
 try {
   const authModule = require('../middleware/auth');
   auth = authModule.authMiddleware;
-  
   if (typeof auth !== 'function') {
-    console.error('ERREUR: authMiddleware n\'est pas une fonction dans le module');
+    console.error("ERREUR: authMiddleware n'est pas une fonction dans le module");
     throw new Error('authMiddleware is not a function');
   }
 } catch (error) {
   console.error('Erreur lors de l\'import du middleware auth:', error);
-  // Middleware de secours qui renvoie une erreur 401
   auth = (req, res, next) => {
-    res.status(401).json({ 
-      success: false, 
-      message: 'Erreur de configuration du serveur - middleware auth non disponible' 
+    res.status(401).json({
+      success: false,
+      message: 'Erreur de configuration du serveur - middleware auth non disponible'
     });
   };
 }
@@ -35,39 +33,79 @@ try {
  */
 router.post('/register', async (req, res) => {
   try {
-    const { 
-      email, 
-      password, 
-      firstName, 
-      lastName, 
-      phoneNumber,
-      dateOfBirth,
-      address,
-      targetCertification,
-      professionalInfo
+    // Accepte plusieurs variantes de noms fournis par le frontend
+    let {
+      email, password,
+      firstName, lastName, prenom, nom, name,
+      firstname, lastname, first_name, last_name, fullName, fullname
     } = req.body;
 
-    // Validation des données
-    if (!email || !password || !firstName || !lastName) {
-      return res.status(400).json({ 
+    // Normalize email if present
+    let finalEmail = typeof email === 'string' ? email.trim().toLowerCase() : undefined;
+
+    // Mappage des champs frontend vers backend
+    let finalFirstName = firstName || firstname || first_name || prenom;
+    let finalLastName = lastName || lastname || last_name || nom;
+
+    // Si "name" / "fullName" est fourni, on le split
+    const nameSource = name || fullName || fullname;
+    if (!finalFirstName && !finalLastName && typeof nameSource === 'string' && nameSource.trim()) {
+      const nameParts = nameSource.trim().split(/\s+/);
+      finalFirstName = nameParts[0];
+      finalLastName = nameParts.slice(1).join(' ') || nameParts[0];
+    }
+
+    // Trim pour éviter des valeurs composées uniquement d'espaces
+    if (typeof finalFirstName === 'string') finalFirstName = finalFirstName.trim() || undefined;
+    if (typeof finalLastName === 'string') finalLastName = finalLastName.trim() || undefined;
+
+    // Validation des données (renvoie détails pour debug)
+    if (!finalEmail || !password || !finalFirstName || !finalLastName) {
+      const missing = {
+        email: !finalEmail,
+        password: !password,
+        firstName: !finalFirstName,
+        lastName: !finalLastName
+      };
+      console.warn('Validation failed for /api/auth/register - missing fields', { body: req.body, missing });
+      return res.status(400).json({
         success: false,
-        message: 'Email, mot de passe, prénom et nom sont requis' 
+        message: 'Email, mot de passe, prénom et nom sont requis',
+        missing,
+        received: {
+          email: finalEmail || null,
+          firstName: finalFirstName || null,
+          lastName: finalLastName || null
+        }
       });
     }
 
-    if (password.length < 8) {
-      return res.status(400).json({ 
+    // Validation de l'email (plus tolérante pour TLD longs)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(finalEmail)) {
+      console.warn('Validation failed for /api/auth/register - invalid email', { body: req.body, receivedEmail: finalEmail });
+      return res.status(400).json({
         success: false,
-        message: 'Le mot de passe doit contenir au moins 8 caractères' 
+        message: 'Veuillez entrer un email valide',
+        received: { email: finalEmail }
       });
     }
 
-    // Vérifier si l'utilisateur existe déjà
-    let user = await User.findOne({ email: email.toLowerCase() });
+    if (typeof password !== 'string' || password.length < 8) {
+      console.warn('Validation failed for /api/auth/register - short password', { body: req.body });
+      return res.status(400).json({
+        success: false,
+        message: 'Le mot de passe doit contenir au moins 8 caractères'
+      });
+    }
+
+    // Vérifier si l'utilisateur existe déjà (utilise finalEmail normalisé)
+    let user = await User.findOne({ email: finalEmail });
     if (user) {
-      return res.status(400).json({ 
+      console.info('Attempt to register with existing email', { email: finalEmail });
+      return res.status(400).json({
         success: false,
-        message: 'Un utilisateur avec cet email existe déjà' 
+        message: 'Un utilisateur avec cet email existe déjà'
       });
     }
 
@@ -75,23 +113,22 @@ router.post('/register', async (req, res) => {
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
     const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
 
-    // Créer un nouvel utilisateur
+    // Créer un nouvel utilisateur (utilise finalEmail et finalFirstName/LastName)
     user = new User({
-      email,
+      email: finalEmail,
       password,
-      firstName,
-      lastName,
-      phoneNumber,
-      dateOfBirth,
-      address,
-      targetCertification,
-      professionalInfo,
+      firstName: finalFirstName,
+      lastName: finalLastName,
+      phoneNumber: req.body.phoneNumber,
+      dateOfBirth: req.body.dateOfBirth,
+      address: req.body.address,
+      targetCertification: req.body.targetCertification,
+      professionalInfo: req.body.professionalInfo,
       emailVerificationToken,
       emailVerificationExpires,
       isEmailVerified: false
     });
 
-    // Enregistrer l'utilisateur (le middleware pre-save hash automatiquement le mot de passe)
     await user.save();
 
     // Génération des statistiques initiales
@@ -101,13 +138,18 @@ router.post('/register', async (req, res) => {
       documentsUploaded: 0,
       lastActive: new Date()
     };
-
     await user.save();
 
-    // Envoyer l'email de vérification
-    await sendEmail(email, 'verification', emailVerificationToken);
+    // Envoyer l'email de vérification (ne doit pas casser l'inscription si échoue)
+    let emailSendError = null;
+    try {
+      await sendEmail(finalEmail, 'verification', emailVerificationToken);
+    } catch (e) {
+      console.error('Failed to send verification email:', e && e.message ? e.message : e);
+      emailSendError = e && e.message ? e.message : String(e);
+    }
 
-    // Générer JWT
+    // Générer JWT (si les secrets manquent, évitez un throw 500)
     const payload = {
       user: {
         id: user.id,
@@ -115,36 +157,56 @@ router.post('/register', async (req, res) => {
         role: user.role
       }
     };
-
-    const token = jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '2h' }
-    );
-
-    // Générer refresh token
-    const refreshToken = jwt.sign(
-      { userId: user.id },
-      process.env.REFRESH_TOKEN_SECRET || 'refreshsecretfallback',
-      { expiresIn: '7d' }
-    );
+    let token = null;
+    let refreshToken = null;
+    let tokenError = null;
+    try {
+      const jwtSecret = process.env.JWT_SECRET;
+      const refreshSecret = process.env.REFRESH_TOKEN_SECRET || 'refreshsecretfallback';
+      if (!jwtSecret) console.warn('JWT_SECRET not defined; using fallback for token generation (not recommended)');
+      token = jwt.sign(payload, jwtSecret || 'jwtfallbacksecret', { expiresIn: '2h' });
+      refreshToken = jwt.sign({ userId: user.id }, refreshSecret, { expiresIn: '7d' });
+    } catch (e) {
+      console.error('Token generation failed:', e && e.message ? e.message : e);
+      tokenError = e && e.message ? e.message : String(e);
+    }
 
     // Retourner les informations de l'utilisateur sans le mot de passe
     const userProfile = user.getProfile();
 
-    res.status(201).json({
+    const response = {
       success: true,
       message: 'Utilisateur créé avec succès. Veuillez vérifier votre email pour activer votre compte.',
-      token,
-      refreshToken,
       user: userProfile
-    });
+    };
+    if (token) response.token = token;
+    if (refreshToken) response.refreshToken = refreshToken;
+    const warnings = [];
+    if (emailSendError) warnings.push({ type: 'email', message: emailSendError });
+    if (tokenError) warnings.push({ type: 'token', message: tokenError });
+    if (warnings.length) response.warnings = warnings;
+
+    res.status(201).json(response);
   } catch (err) {
-    console.error('Erreur d\'inscription:', err.message);
-    res.status(500).json({ 
+    // If mongoose validation error, return 400 with details to help debugging
+    if (err && err.name === 'ValidationError') {
+      const errors = Object.keys(err.errors || {}).reduce((acc, key) => {
+        acc[key] = err.errors[key].message;
+        return acc;
+      }, {});
+      console.warn('Mongoose validation error on register:', errors, { body: req.body });
+      return res.status(400).json({
+        success: false,
+        message: 'Validation des données échouée',
+        errors
+      });
+    }
+
+    console.error('Erreur d\'inscription:', err && err.message ? err.message : err);
+    res.status(500).json({
       success: false,
       message: 'Erreur serveur',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (err && err.message ? err.message : err) : undefined
     });
   }
 });
@@ -160,52 +222,45 @@ router.post('/login', loginLimiter, async (req, res) => {
     const userAgent = req.headers['user-agent'] || 'unknown';
     const ipAddress = req.ip || req.connection.remoteAddress;
 
-    // Validation des données
     if (!email || !password) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Email et mot de passe sont requis' 
+        message: 'Email et mot de passe sont requis'
       });
     }
 
-    // Rechercher l'utilisateur
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Identifiants invalides' 
+        error: 'Email ou mot de passe incorrect'
       });
     }
 
-    // Vérifier si l'utilisateur est actif
     if (!user.isActive) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Ce compte est désactivé. Veuillez contacter l\'administrateur.' 
+        message: 'Ce compte est désactivé. Veuillez contacter l\'administrateur.'
       });
     }
 
-    // Vérifier le mot de passe
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Identifiants invalides' 
+        error: 'Email ou mot de passe incorrect'
       });
     }
 
-    // Vérifier si l'utilisateur est vérifié
     if (!user.isEmailVerified) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Veuillez vérifier votre email avant de vous connecter' 
+        error: 'Veuillez vérifier votre email'
       });
     }
 
-    // Mettre à jour les informations de connexion
     await user.updateLoginStatus(ipAddress, userAgent);
 
-    // Générer JWT
     const payload = {
       user: {
         id: user.id,
@@ -213,23 +268,15 @@ router.post('/login', loginLimiter, async (req, res) => {
         role: user.role
       }
     };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2h' });
 
-    const token = jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '2h' }
-    );
-
-    // Générer refresh token
     const refreshToken = jwt.sign(
       { userId: user.id },
       process.env.REFRESH_TOKEN_SECRET || 'refreshsecretfallback',
       { expiresIn: '7d' }
     );
 
-    // Retourner les informations de l'utilisateur sans le mot de passe
     const userProfile = user.getProfile();
-
     res.json({
       success: true,
       message: 'Connexion réussie',
@@ -239,7 +286,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     });
   } catch (err) {
     console.error('Erreur de connexion:', err.message);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Erreur serveur',
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -257,35 +304,35 @@ router.post('/refresh-token', async (req, res) => {
     const { refreshToken } = req.body;
 
     if (!refreshToken) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Refresh token requis' 
+        message: 'Refresh token requis'
       });
     }
 
     // Vérifier le refresh token
     const decoded = jwt.verify(
-      refreshToken, 
+      refreshToken,
       process.env.REFRESH_TOKEN_SECRET || 'refreshsecretfallback'
     );
-    
+
     // Vérifier si l'utilisateur existe toujours
     const user = await User.findById(decoded.userId);
     if (!user) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Utilisateur introuvable' 
+        message: 'Utilisateur introuvable'
       });
     }
 
     // Vérifier si l'utilisateur est actif
     if (!user.isActive) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Ce compte est désactivé' 
+        message: 'Ce compte est désactivé'
       });
     }
-    
+
     // Générer un nouveau token JWT
     const payload = {
       user: {
@@ -316,13 +363,13 @@ router.post('/refresh-token', async (req, res) => {
   } catch (err) {
     console.error('Erreur de rafraîchissement de token:', err.message);
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: 'Refresh token invalide ou expiré' 
+        message: 'Refresh token invalide ou expiré'
       });
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       success: false,
       message: 'Erreur serveur',
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -341,50 +388,7 @@ router.get('/me', auth, async (req, res) => {
       .select('-password')
       .populate('dossiers', 'title status updatedAt')
       .populate('documents', 'title type updatedAt');
-    
-    if (!user) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Utilisateur introuvable' 
-      });
-    }
-    
-    res.json({
-      success: true,
-      user: user.getProfile()
-    });
-  } catch (err) {
-    console.error('Erreur de récupération du profil:', err.message);
-    res.status(500).json({ 
-      success: false,
-      message: 'Erreur serveur',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
-  }
-});
 
-/**
- * @route   PUT /api/auth/profile
- * @desc    Mettre à jour le profil utilisateur
- * @access  Private
- */
-router.put('/profile', auth, async (req, res) => {
-  try {
-    const {
-      firstName,
-      lastName,
-      phoneNumber,
-      dateOfBirth,
-      address,
-      bio,
-      professionalInfo,
-      education,
-      targetCertification,
-      preferences
-    } = req.body;
-
-    // Récupérer l'utilisateur
-    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -392,53 +396,12 @@ router.put('/profile', auth, async (req, res) => {
       });
     }
 
-    // Mettre à jour les champs fournis
-    if (firstName) user.firstName = firstName;
-    if (lastName) user.lastName = lastName;
-    if (phoneNumber) user.phoneNumber = phoneNumber;
-    if (dateOfBirth) user.dateOfBirth = new Date(dateOfBirth);
-    if (bio) user.bio = bio;
-    if (targetCertification) user.targetCertification = targetCertification;
-
-    // Mettre à jour l'adresse si fournie
-    if (address) {
-      user.address = {
-        ...user.address,
-        ...address
-      };
-    }
-
-    // Mettre à jour les informations professionnelles si fournies
-    if (professionalInfo) {
-      user.professionalInfo = {
-        ...user.professionalInfo,
-        ...professionalInfo
-      };
-    }
-
-    // Mettre à jour l'éducation si fournie
-    if (education && Array.isArray(education)) {
-      user.education = education;
-    }
-
-    // Mettre à jour les préférences si fournies
-    if (preferences) {
-      user.preferences = {
-        ...user.preferences,
-        ...preferences
-      };
-    }
-
-    // Sauvegarder les modifications
-    await user.save();
-
     res.json({
       success: true,
-      message: 'Profil mis à jour avec succès',
       user: user.getProfile()
     });
   } catch (err) {
-    console.error('Erreur de mise à jour du profil:', err.message);
+    console.error('Erreur de récupération du profil:', err.message);
     res.status(500).json({
       success: false,
       message: 'Erreur serveur',
@@ -520,7 +483,10 @@ router.get('/verify-email/:token', async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ error: 'Token invalide ou expiré' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Token invalide ou expiré' 
+      });
     }
 
     user.isEmailVerified = true;
@@ -528,10 +494,17 @@ router.get('/verify-email/:token', async (req, res) => {
     user.emailVerificationExpires = undefined;
     await user.save();
 
-    res.json({ message: 'Email vérifié avec succès' });
+    res.json({ 
+      success: true,
+      message: 'Email vérifié avec succès' 
+    });
   } catch (error) {
     console.error('Erreur lors de la vérification de l\'email:', error);
-    res.status(500).json({ error: 'Erreur lors de la vérification de l\'email' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Erreur serveur lors de la vérification de l\'email',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -554,10 +527,10 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
     // Rechercher l'utilisateur
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      // Pour des raisons de sécurité, ne pas indiquer si l'utilisateur existe ou non
+      // Pour des raisons de sécurité, renvoyer le même message que si l'utilisateur existait
       return res.json({
         success: true,
-        message: 'Si cet email existe dans notre système, un lien de réinitialisation a été envoyé'
+        message: 'Un email de réinitialisation a été envoyé'
       });
     }
 
@@ -572,7 +545,7 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Si cet email existe dans notre système, un lien de réinitialisation a été envoyé'
+      message: 'Un email de réinitialisation a été envoyé'
     });
   } catch (err) {
     console.error('Erreur de demande de réinitialisation de mot de passe:', err.message);
@@ -617,7 +590,7 @@ router.post('/reset-password/:token', async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'Token de réinitialisation invalide ou expiré'
+        error: 'Token invalide ou expiré'
       });
     }
 
@@ -625,6 +598,8 @@ router.post('/reset-password/:token', async (req, res) => {
     user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
+    // Après réinitialisation du mot de passe, marquer l'email comme vérifié
+    user.isEmailVerified = true;
     await user.save();
 
     res.json({
@@ -654,4 +629,4 @@ router.post('/logout', auth, (req, res) => {
   });
 });
 
-module.exports = router; 
+module.exports = router;
