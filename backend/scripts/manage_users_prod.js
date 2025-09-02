@@ -3,9 +3,9 @@
 // WARNING: This script will DELETE all users in the target database and create two test accounts.
 // Intended to be run in a secure environment where MONGODB_URI is set to the production DB.
 
+
 require('dotenv').config();
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 
 const User = require('../models/user');
 
@@ -42,9 +42,10 @@ const User = require('../models/user');
     const userEmail = process.env.NEW_USER_EMAIL || 'user@lexia.test';
     const userPassword = process.env.NEW_USER_PASSWORD || 'User123!';
 
-    const saltRounds = 10;
-    const adminHash = await bcrypt.hash(adminPassword, saltRounds);
-    const userHash = await bcrypt.hash(userPassword, saltRounds);
+
+    // Do NOT pre-hash the password here. The User model has a pre-save hook that
+    // hashes the password. Supplying an already-hashed value causes a double-hash
+    // and prevents login with the plain password.
 
     const now = new Date();
 
@@ -52,9 +53,12 @@ const User = require('../models/user');
       firstName: 'Admin',
       lastName: 'User',
       email: adminEmail,
-      password: adminHash,
+      // store plain password here so pre-save will hash it
+      password: adminPassword,
       role: 'admin',
-      active: true,
+      // userSchema expects isActive and isEmailVerified
+      isActive: true,
+      isEmailVerified: true,
       createdAt: now
     });
 
@@ -62,9 +66,10 @@ const User = require('../models/user');
       firstName: 'Test',
       lastName: 'User',
       email: userEmail,
-      password: userHash,
+      password: userPassword,
       role: 'user',
-      active: true,
+      isActive: true,
+      isEmailVerified: true,
       createdAt: now
     });
 
