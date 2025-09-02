@@ -1,4 +1,13 @@
-import { useState, useEffect } from 'react';import PropTypes from 'prop-types';import { useToast } from '../hooks/useToast';import LoadingSpinner from './LoadingSpinner';import { API_ENDPOINTS, getAuthHeaders } from '../config/api';import '../styles/lexia-design-system.css';
+import { useState, useEffect } from 'react';import PropTypes from 'prop-types';import { useToast } from '../hooks/useToast';import LoadingSpinner from './LoadingSpinner';import { API_ENDPOINTS, getAuthHeaders } from '../config/api';import '../styles/lexia-design-system.css';import { 
+  CheckCircleIcon, 
+  ChevronRightIcon, 
+  DocumentMagnifyingGlassIcon, 
+  WrenchScrewdriverIcon,
+  AcademicCapIcon,
+  ArrowPathIcon,
+  PencilIcon,
+  LockClosedIcon
+} from '@heroicons/react/24/outline'; // Import new icons
 
 // Import des sections du questionnaire
 import MotivationSection from './wizard/MotivationSection';
@@ -13,7 +22,7 @@ const VAE_SECTIONS = [
     id: 'motivation',
     title: 'Motivations',
     subtitle: 'Vos motivations pour la VAE',
-    icon: '🎯',
+    icon: CheckCircleIcon, // Using Heroicon
     questions: [1, 2, 3, 4],
     color: 'var(--lexia-orange)'
   },
@@ -21,7 +30,7 @@ const VAE_SECTIONS = [
     id: 'parcours',
     title: 'Parcours professionnel',
     subtitle: 'Votre expérience dans le secteur',
-    icon: '💼',
+    icon: WrenchScrewdriverIcon, // Using Heroicon
     questions: [5, 6, 7, 8, 9],
     color: 'var(--lexia-pink)'
   },
@@ -29,7 +38,7 @@ const VAE_SECTIONS = [
     id: 'formation',
     title: 'Formation',
     subtitle: 'Votre parcours de formation',
-    icon: '🎓',
+    icon: AcademicCapIcon, // Using Heroicon
     questions: [10, 11, 12],
     color: 'var(--lexia-blue)'
   },
@@ -37,7 +46,7 @@ const VAE_SECTIONS = [
     id: 'experience',
     title: 'Expérience significative',
     subtitle: 'Une situation de travail marquante',
-    icon: '⭐',
+    icon: DocumentMagnifyingGlassIcon, // Using Heroicon
     questions: [13, 14, 15, 16, 17],
     color: 'var(--lexia-cyan)'
   },
@@ -45,7 +54,7 @@ const VAE_SECTIONS = [
     id: 'contexte',
     title: 'Contexte institutionnel',
     subtitle: 'Votre environnement de travail',
-    icon: '🏢',
+    icon: '🏢', // Fallback to emoji if no Heroicon is suitable yet
     questions: [18, 19, 20, 21, 22],
     color: 'var(--lexia-orange)'
   },
@@ -53,7 +62,7 @@ const VAE_SECTIONS = [
     id: 'competences',
     title: 'Compétences',
     subtitle: 'Vos compétences professionnelles',
-    icon: '💡',
+    icon: '💡', // Fallback to emoji
     questions: [23, 24, 25, 26],
     color: 'var(--lexia-pink)'
   }
@@ -69,9 +78,9 @@ function VAEWizard({ onComplete }) {
 
   // Calculer le pourcentage de progression
   const calculateProgress = () => {
-    const totalQuestions = 26;
-    const answeredQuestions = Object.keys(responses).length;
-    return Math.round((answeredQuestions / totalQuestions) * 100);
+    const totalQuestions = VAE_SECTIONS.reduce((acc, section) => acc + section.questions.length, 0);
+    const answeredQuestions = Object.keys(responses).filter(key => responses[key] && responses[key].trim() !== '').length;
+    return totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
   };
 
   // Sauvegarder les réponses dans le localStorage
@@ -79,6 +88,12 @@ function VAEWizard({ onComplete }) {
     const savedResponses = localStorage.getItem('vae_responses');
     if (savedResponses) {
       setResponses(JSON.parse(savedResponses));
+      // Re-calculate completed sections based on loaded responses
+      const newCompletedSections = VAE_SECTIONS.map((section, index) => {
+        const sectionQuestionsAnswered = section.questions.every(qId => responses[qId] && responses[qId].trim() !== '');
+        return sectionQuestionsAnswered ? index : null;
+      }).filter(index => index !== null);
+      setCompletedSections(newCompletedSections);
     }
   }, []);
 
@@ -96,9 +111,16 @@ function VAEWizard({ onComplete }) {
 
   // Sauvegarder les réponses d'une section
   const handleSectionComplete = (sectionResponses) => {
-    setResponses(prev => ({ ...prev, ...sectionResponses }));
+    const updatedResponses = { ...responses, ...sectionResponses };
+    setResponses(updatedResponses);
     
-    if (!completedSections.includes(currentSection)) {
+    // Check if the current section is truly completed
+    const currentSectionData = VAE_SECTIONS[currentSection];
+    const allQuestionsAnsweredInCurrentSection = currentSectionData.questions.every(
+      qId => updatedResponses[qId] && updatedResponses[qId].trim() !== ''
+    );
+
+    if (allQuestionsAnsweredInCurrentSection && !completedSections.includes(currentSection)) {
       setCompletedSections(prev => [...prev, currentSection]);
     }
 
@@ -140,7 +162,10 @@ function VAEWizard({ onComplete }) {
       section,
       responses,
       onComplete: handleSectionComplete,
-      onBack: currentSection > 0 ? () => setCurrentSection(prev => prev - 1) : null
+      onBack: currentSection > 0 ? () => setCurrentSection(prev => prev - 1) : null,
+      onClose: () => setIsModalOpen(false), // Add onClose prop
+      totalQuestionsInSection: section.questions.length,
+      answeredQuestionsInSection: section.questions.filter(qId => responses[qId] && responses[qId].trim() !== '').length
     };
 
     switch (section.id) {
@@ -162,83 +187,109 @@ function VAEWizard({ onComplete }) {
   };
 
   return (
-    <div className="vae-wizard-container">
-      {/* En-tête avec progression */}
-      <div className="lexia-card mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="lexia-heading-1">Création de votre dossier VAE</h1>
+    <div className="vae-wizard-container relative">
+      {/* Header sticky avec progression globale */}
+      <div className="sticky top-0 z-50 bg-white dark:bg-gray-900 shadow-md py-4 mb-6 lexia-card rounded-b-lg -mx-6 px-6 md:px-8 lg:px-12">
+        <div className="flex items-center justify-between">
+          <h1 className="lexia-heading-2 md:lexia-heading-1 text-lexia-text-primary">Votre dossier VAE</h1>
           <div className="text-right">
-            <span className="lexia-caption">Progression globale</span>
-            <p className="text-2xl font-bold" style={{ color: 'var(--lexia-blue)' }}>
+            <span className="lexia-caption text-lexia-text-secondary">Progression globale</span>
+            <p className="text-2xl font-bold text-lexia-blue">
               {calculateProgress()}%
             </p>
           </div>
         </div>
-        
-        <div className="lexia-progress-bar">
+        <div className="lexia-progress-bar mt-2">
           <div 
-            className="lexia-progress-fill" 
+            className="lexia-progress-fill"
             style={{ width: `${calculateProgress()}%` }}
           />
         </div>
       </div>
 
       {/* Grille des sections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 mt-10">
         {VAE_SECTIONS.map((section, index) => {
           const isCompleted = completedSections.includes(index);
           const isLocked = index > 0 && !completedSections.includes(index - 1);
+          const isActive = currentSection === index && isModalOpen; // Section currently open in modal
+          const Icon = section.icon; // Get the Heroicon component or emoji
           
+          let statusText = 'À faire';
+          let statusColor = 'text-gray-500';
+          let actionText = 'Commencer';
+          let actionIcon = <ChevronRightIcon className="h-5 w-5" />;
+          let borderColor = section.color;
+
+          if (isCompleted) {
+            statusText = 'Fini';
+            statusColor = 'text-green-600';
+            actionText = 'Modifier';
+            actionIcon = <PencilIcon className="h-5 w-5" />;
+            borderColor = 'var(--lexia-success)';
+          } else if (isActive) {
+            statusText = 'En cours';
+            statusColor = 'text-blue-600';
+            actionText = 'Continuer';
+            actionIcon = <ArrowPathIcon className="h-5 w-5" />;
+            borderColor = 'var(--lexia-blue)';
+          } else if (isLocked) {
+            statusText = 'Verrouillé';
+            statusColor = 'text-red-500';
+            actionText = 'Débloquer';
+            actionIcon = <LockClosedIcon className="h-5 w-5" />;
+            borderColor = 'var(--lexia-error)';
+          }
+
           return (
-            <div
+            <button
               key={section.id}
               onClick={() => !isLocked && openSection(index)}
-              className={`lexia-card cursor-pointer transition-all duration-300 ${
-                isLocked ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+              className={`lexia-card flex flex-col justify-between p-6 rounded-lg transition-all duration-300 transform
+                ${isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:scale-[1.02] hover:shadow-lg lexia-focus-ring'}
+                ${isActive ? 'ring-2 ring-offset-2 ring-blue-500 dark:ring-blue-400' : ''}
+                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lexia-focus
               }`}
               style={{
-                borderLeft: `4px solid ${isCompleted ? 'var(--lexia-success)' : section.color}`,
-                background: isCompleted ? 'var(--lexia-gray-100)' : 'var(--lexia-white)'
+                borderLeft: `4px solid ${borderColor}`,
+                backgroundColor: 'var(--lexia-surface)',
+                borderColor: 'var(--lexia-border-muted)' // Ensure border is also themed
               }}
+              disabled={isLocked}
+              aria-label={`Accéder à la section ${section.title}. État: ${statusText}`}
             >
-              <div className="flex items-start gap-3">
-                <span className="text-3xl">{section.icon}</span>
+              <div className="flex items-start gap-4 mb-4">
+                <div className={`text-4xl ${isCompleted ? 'text-green-500' : 'text-gray-400'}`}>
+                  {typeof Icon === 'string' ? Icon : <Icon className="h-10 w-10" />}
+                </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1">{section.title}</h3>
-                  <p className="lexia-caption">{section.subtitle}</p>
-                  <div className="mt-3 flex items-center gap-2">
-                    {isCompleted ? (
-                      <span className="text-sm text-green-600 font-medium">
-                        ✓ Complété
-                      </span>
-                    ) : isLocked ? (
-                      <span className="text-sm text-gray-500">
-                        🔒 Verrouillé
-                      </span>
-                    ) : (
-                      <span className="text-sm text-blue-600 font-medium">
-                        → Commencer
-                      </span>
-                    )}
-                  </div>
+                  <h3 className="lexia-heading-3 text-lexia-text-primary mb-1">{section.title}</h3>
+                  <p className="lexia-caption text-lexia-text-secondary">{section.subtitle}</p>
                 </div>
               </div>
-            </div>
+              <div className="flex justify-between items-center">
+                <span className={`lexia-badge py-1 px-3 rounded-full ${statusColor} bg-opacity-20`}>
+                  {statusText}
+                </span>
+                <div className={`flex items-center gap-1 font-medium ${isLocked ? 'text-red-500' : 'text-blue-500'}`}>
+                  {actionIcon} {actionText}
+                </div>
+              </div>
+            </button>
           );
         })}
       </div>
 
       {/* Actions principales */}
-      <div className="flex justify-center gap-4">
+      <div className="flex justify-center gap-4 mt-8 pb-12">
         <button 
           className="lexia-btn lexia-btn-secondary"
           onClick={() => {
-            if (window.confirm('Sauvegarder et continuer plus tard ?')) {
-              toast.info('Progression sauvegardée');
-            }
+            toast.info('Progression sauvegardée !');
           }}
+          aria-label="Sauvegarder et fermer le formulaire"
         >
-          💾 Sauvegarder
+          💾 Sauvegarder et fermer
         </button>
         
         {completedSections.length === VAE_SECTIONS.length && (
@@ -246,6 +297,7 @@ function VAEWizard({ onComplete }) {
             className="lexia-btn lexia-btn-primary"
             onClick={handleGenerateDocument}
             disabled={isSaving}
+            aria-label="Générer le dossier VAE avec l'IA"
           >
             {isSaving ? (
               <>
@@ -261,13 +313,18 @@ function VAEWizard({ onComplete }) {
 
       {/* Modal pour les sections */}
       {isModalOpen && (
-        <div className="lexia-modal-backdrop" onClick={() => setIsModalOpen(false)}>
+        <div 
+          className="lexia-modal-backdrop"
+          onClick={() => setIsModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+        >
           <div 
             className="lexia-modal"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '800px' }}
           >
-            <div className="p-6">
+            <div className="p-6 sm:p-8">
               {renderCurrentSection()}
             </div>
           </div>
