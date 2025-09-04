@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
-import '../styles/lexia-design-system.css';
 
 function AdminUploadQuestions() {
   const navigate = useNavigate();

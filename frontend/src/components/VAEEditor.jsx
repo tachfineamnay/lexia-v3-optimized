@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useToast } from '../hooks/useToast';
 import LoadingSpinner from './LoadingSpinner';
-import '../styles/lexia-design-system.css';
 
 function VAEEditor({ initialDocument, userId }) {
   const [content, setContent] = useState(initialDocument || '');

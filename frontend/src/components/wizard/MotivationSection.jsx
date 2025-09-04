@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import '../../styles/lexia-design-system.css';
 import { LightBulbIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline'; // Import new icons
 import { useToast } from '../hooks/useToast'; // Import useToast
 import { API_ENDPOINTS, getAuthHeaders } from '../../config/api'; // Import API_ENDPOINTS and getAuthHeaders

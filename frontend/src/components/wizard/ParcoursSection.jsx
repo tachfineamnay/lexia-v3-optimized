@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import '../../styles/lexia-design-system.css';
 
 const PARCOURS_QUESTIONS = [
   {
