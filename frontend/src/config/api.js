@@ -122,6 +122,7 @@ export const API_CONFIG = {
     aiChat: '/ai/chat',
     aiSuggestions: '/ai/suggestions',
     aiAnalyze: '/ai/analyze-document',
+    aiGenerateVae: '/ai/generate-vae',
 
     // Dashboard
     dashboardStats: '/dashboard/stats',

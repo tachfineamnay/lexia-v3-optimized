@@ -20,10 +20,12 @@ import VAEWizard from '../components/VAEWizard';
 import VAEEditor from '../components/VAEEditor';
 import LoadingSpinner from '../components/LoadingSpinner';
 
+
 function VAECreation() {
   const [currentView, setCurrentView] = useState('welcome'); // welcome, wizard, editor
   const [generatedDocument, setGeneratedDocument] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
@@ -31,10 +33,12 @@ function VAECreation() {
   // Vérifier si l'utilisateur a un dossier VAE en cours
   useEffect(() => {
     checkExistingDocument();
+    // eslint-disable-next-line
   }, []);
 
   const checkExistingDocument = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const response = await fetch(`/api/documents/${user.id}/vae`, {
         headers: {
@@ -48,8 +52,15 @@ function VAECreation() {
           setGeneratedDocument(data.document);
           setCurrentView('editor');
         }
+      } else if (response.status === 404) {
+        // Aucun document existant, on reste sur welcome
+        setGeneratedDocument(null);
+      } else {
+        const errText = await response.text();
+        setError({ status: response.status, message: errText || 'Erreur inconnue' });
       }
     } catch (error) {
+      setError({ status: 500, message: error.message || 'Erreur réseau' });
       console.error('Erreur lors de la vérification du document:', error);
     } finally {
       setIsLoading(false);
@@ -65,6 +76,7 @@ function VAECreation() {
 
   // Commencer une nouvelle création
   const startNewCreation = () => {
+    setError(null);
     if (generatedDocument) {
       if (window.confirm('Vous avez déjà un dossier en cours. Voulez-vous vraiment recommencer ?')) {
         setGeneratedDocument(null);
@@ -79,6 +91,21 @@ function VAECreation() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
         <LoadingSpinner size="lg" color="primary" text="Chargement de votre dossier VAE..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+        <div className="bg-white/10 border border-red-500/30 rounded-2xl p-8 text-center max-w-lg mx-auto">
+          <h2 className="text-2xl font-bold text-red-400 mb-4">Erreur lors du chargement du dossier VAE</h2>
+          <p className="text-gray-300 mb-4">{error.message}</p>
+          <button
+            onClick={checkExistingDocument}
+            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/25 transition-all"
+          >Réessayer</button>
+        </div>
       </div>
     );
   }
