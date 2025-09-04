@@ -16,7 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
-import VAEWizard from '../components/VAEWizard';
+import VAEWizard from '../components/VAEWizardNew';
 import VAEEditor from '../components/VAEEditor';
 import LoadingSpinner from '../components/LoadingSpinner';
 
