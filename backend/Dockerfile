@@ -1,12 +1,12 @@
 # Production-ready Node.js backend
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
 # Install curl for health checks and dumb-init for signal handling
 RUN apk add --no-cache curl dumb-init && \
-    addgroup -g 1001 -S nodejs && \
-    adduser -S lexia -u 1001
+  addgroup -g 1001 -S nodejs && \
+  adduser -S lexia -u 1001
 
 # Copy package files
 COPY package*.json ./
@@ -19,8 +19,8 @@ COPY . .
 
 # Create necessary directories with proper permissions
 RUN mkdir -p uploads exports logs && \
-    chown -R lexia:nodejs . && \
-    chmod -R 755 uploads exports logs
+  chown -R lexia:nodejs . && \
+  chmod -R 755 uploads exports logs
 
 # Switch to non-root user
 USER lexia
