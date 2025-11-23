@@ -1,245 +1,91 @@
-# 📋 Rapport d'Audit - Full-Stack Coherence & Functionality
+# Rapport d'Audit DevOps Fullstack - LexiaV3
 
-## 🎯 Objectif
-Garantir que l'inscription (et toutes routes publiques) fonctionne **sans erreur 400/500** et que la langue, la structure des champs et le parcours utilisateur sont **cohérents et entièrement en français**.
+## 1. Vue d'ensemble de la Stack
 
----
-
-## ✅ Checklist d'Audit - Résultats
-
-| N° | Point audité | Statut | Action réalisée |
-|---|---|---|---|
-| 1 | **Mapping body ↔ modèle** | ✅ **OK** | Harmonisation frontend/backend - Accepte `firstName/lastName` ET `prenom/nom` |
-| 2 | **Validations** | ✅ **OK** | Validation email ajoutée, messages cohérents en français |
-| 3 | **Messages utilisateur** | ✅ **OK** | Tous les messages traduits en français, format standardisé |
-| 4 | **Logs & erreurs serveur** | ✅ **OK** | Logs harmonisés, pas d'exposition de stack en prod |
-| 5 | **Routes & commentaires** | ✅ **OK** | Commentaires et descriptions en français |
-| 6 | **Champs optionnels réels** | ✅ **OK** | Distinction claire obligatoires/optionnels, validation 400 claire |
-| 7 | **Tests de bout en bout** | ✅ **OK** | Tests mis à jour, curl valide généré |
-| 8 | **Réponse homogène** | ✅ **OK** | Format JSON standardisé avec `success`, `message`, `token`, `user` |
-
----
-
-## 🔧 Corrections Apportées
-
-### 1. **Mapping des Champs Frontend ↔ Backend**
-**Problème** : Frontend envoyait `firstName/lastName`, backend attendait `prenom/nom`
-```javascript
-// ✅ APRÈS - Accepte les deux formats
-let { email, password, firstName, lastName, prenom, nom, name } = req.body;
-const finalFirstName = firstName || prenom;
-const finalLastName = lastName || nom;
-```
-
-### 2. **Messages d'Erreur Harmonisés**
-**Problème** : Mix français/anglais, formats incohérents
-```javascript
-// ✅ APRÈS - Format standardisé
-{
-  "success": false,
-  "message": "Email, mot de passe, prénom et nom sont requis"
-}
-```
-
-### 3. **Validation Email Ajoutée**
-```javascript
-// ✅ NOUVEAU - Validation email côté backend
-const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-if (!emailRegex.test(email)) {
-  return res.status(400).json({
-    success: false,
-    message: 'Veuillez entrer un email valide'
-  });
-}
-```
-
-### 4. **Format de Réponse Standardisé**
-```javascript
-// ✅ APRÈS - Réponse cohérente partout
-{
-  "success": true,
-  "message": "Utilisateur créé avec succès. Veuillez vérifier votre email pour activer votre compte.",
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "firstName": "Toto",
-    "lastName": "Dupont",
-    "email": "toto@example.com",
-    ...
-  }
-}
-```
-
-### 5. **Tests Corrigés**
-- Import corrigé : `../models/user` (minuscule)
-- Assertions mises à jour pour nouveau format
-- Test ajouté pour format legacy `prenom/nom`
-
----
-
-## 🧪 Test d'Inscription Valide
-
-### Commande cURL
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "toto@example.com",
-    "password": "12345678",
-    "firstName": "Toto",
-    "lastName": "Dupont"
-  }'
-```
-
-### Réponse Attendue (201)
-```json
-{
-  "success": true,
-  "message": "Utilisateur créé avec succès. Veuillez vérifier votre email pour activer votre compte.",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "_id": "...",
-    "firstName": "Toto",
-    "lastName": "Dupont",
-    "email": "toto@example.com",
-    "role": "user",
-    "isActive": true,
-    "isEmailVerified": false,
-    "preferences": {
-      "language": "fr",
-      "theme": "system",
-      "emailNotifications": true,
-      "aiAssistance": true,
-      "dataSaving": false
-    },
-    "subscriptionPlan": "free",
-    "subscriptionStatus": "active",
-    "usageStats": {
-      "aiRequestsCount": 0,
-      "dossiersCreated": 0,
-      "documentsUploaded": 0,
-      "lastActive": "2025-08-31T..."
-    },
-    "createdAt": "2025-08-31T...",
-    "updatedAt": "2025-08-31T..."
-  }
-}
-```
-
-### Tests de Compatibilité Supplémentaires
-
-#### 1. Format Legacy (prenom/nom)
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "legacy@example.com",
-    "password": "12345678",
-    "prenom": "Legacy",
-    "nom": "User"
-  }'
-```
-
-#### 2. Format Name Unique
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "name@example.com",
-    "password": "12345678",
-    "name": "Jean Dupuis Martin"
-  }'
-```
-
----
-
-## 🚨 Cas d'Erreur Testés
-
-### 1. Champs Manquants (400)
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email": "test@example.com"}'
-```
-**Réponse** :
-```json
-{
-  "success": false,
-  "message": "Email, mot de passe, prénom et nom sont requis"
-}
-```
-
-### 2. Email Invalide (400)
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "invalid-email",
-    "password": "12345678",
-    "firstName": "Test",
-    "lastName": "User"
-  }'
-```
-**Réponse** :
-```json
-{
-  "success": false,
-  "message": "Veuillez entrer un email valide"
-}
-```
-
-### 3. Mot de Passe Trop Court (400)
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "123",
-    "firstName": "Test",
-    "lastName": "User"
-  }'
-```
-**Réponse** :
-```json
-{
-  "success": false,
-  "message": "Le mot de passe doit contenir au moins 8 caractères"
-}
-```
-
-### 4. Email Déjà Existant (400)
-```json
-{
-  "success": false,
-  "message": "Un utilisateur avec cet email existe déjà"
-}
-```
-
----
-
-## 📁 Fichiers Modifiés
+### Frontend
+- **Framework :** React 18
+- **Build Tool :** Vite 6 (Dernière version)
+- **Styling :** TailwindCSS 4 (Dernière version)
+- **State/Network :** Axios, React Query (non vu mais recommandé), Context
+- **Tests :** Jest, React Testing Library
 
 ### Backend
-- ✅ `backend/routes/auth.js` - Mapping champs, validations, messages français
-- ✅ `backend/routes/users.js` - Messages français, format réponse standardisé
-- ✅ `backend/middleware/rateLimiter.js` - Messages français standardisés
-- ✅ `backend/tests/auth.test.js` - Import corrigé, tests mis à jour
+- **Runtime :** Node.js (>=18)
+- **Framework :** Express.js
+- **Base de données :** MongoDB (Mongoose 7.x)
+- **Cache :** Redis
+- **Auth :** JWT (Access + Refresh Tokens)
+- **AI :** OpenAI, Google Gemini
 
-### Aucune modification frontend nécessaire
-Le frontend fonctionnait déjà correctement avec `firstName/lastName`
+### Infrastructure
+- **Conteneurisation :** Docker, Docker Compose
+- **Orchestration/Déploiement :** Coolify
+- **CI/CD :** GitHub Actions
 
 ---
 
-## 🎉 Résultat Final
+## 2. Points Positifs (Ce qui est OK) ✅
 
-✅ **AUDIT RÉUSSI** - Tous les critères respectés :
+*   **Modernité du Frontend :** Utilisation des dernières versions de Vite et TailwindCSS, ce qui garantit de bonnes performances et une pérennité.
+*   **Sécurité Backend :** Utilisation de `helmet`, `cors`, et `express-rate-limit`. Les secrets sont bien gérés via des variables d'environnement.
+*   **Architecture Docker :**
+    *   Utilisation de `dumb-init` pour la gestion des signaux dans le backend.
+    *   Build multi-stage pour le frontend (Node -> Nginx) pour des images légères.
+    *   Utilisation d'un utilisateur non-root (`lexia`) pour la sécurité.
+*   **Structure du Code :** Séparation claire Frontend/Backend.
 
-1. **Cohérence parfaite** : Frontend `firstName/lastName` → Backend accepte et mappe correctement
-2. **Français intégral** : Tous messages, erreurs et logs en français
-3. **Validation robuste** : Email, mots de passe, champs obligatoires
-4. **Format standardisé** : Réponses JSON homogènes avec `success`, `message`, données
-5. **Tests à jour** : Validation de tous les cas d'usage
-6. **Compatibilité étendue** : Accepte 3 formats d'entrée (frontend, legacy, name)
+---
 
-L'inscription fonctionne désormais **sans erreur 400/500** avec une expérience utilisateur **entièrement française** et **cohérente**.
+## 3. Problèmes Identifiés & Bugs Potentiels ⚠️
+
+### 🔴 Critique (À corriger immédiatement)
+
+1.  **CI/CD Cassée (GitHub Actions) :**
+    *   Le fichier `.github/workflows/deploy.yml` cherche `backend/Dockerfile` et `frontend/Dockerfile`.
+    *   **Réalité :** Les fichiers sont à la racine et nommés `Dockerfile.backend` et `Dockerfile.frontend`.
+    *   **Conséquence :** Le job de build dans GitHub Actions échouera.
+
+2.  **Dépendances Backend Inutiles/Mal Placées :**
+    *   `pg` (PostgreSQL) est installé mais non utilisé (le code utilise MongoDB). C'est du "poids mort".
+    *   `mongodb-memory-server` est dans `dependencies` (prod) alors qu'il ne sert qu'aux tests (`devDependencies`).
+    *   `chai` est dans `dependencies` (devrait être `devDependencies`).
+
+3.  **Configuration Proxy Frontend (Dev Local) :**
+    *   `vite.config.js` proxy pointe vers `http://localhost:8089`.
+    *   `docker-compose.yml` expose le backend sur le port `5000`.
+    *   **Risque :** Le développement local hors Docker (npm run dev) ne pourra pas contacter l'API sans configuration manuelle.
+
+### 🟠 Important (Améliorations recommandées)
+
+4.  **Connexion Base de Données :**
+    *   Options Mongoose dépréciées : `useNewUrlParser`, `useUnifiedTopology` ne sont plus nécessaires en Mongoose 7+.
+    *   **Gestion d'erreur risquée :** Le serveur démarre même si la connexion DB échoue ("Application will continue without database connection"). Pour une API, c'est dangereux car toutes les requêtes échoueront ensuite. Il vaut mieux crasher et laisser Docker redémarrer le service.
+
+5.  **Sécurité CI/CD :**
+    *   Les URLs de Webhook Coolify (avec UUID) et l'IP du serveur (`168.231.86.146`) sont hardcodées dans `deploy.yml`.
+    *   **Solution :** Utiliser des `secrets.COOLIFY_WEBHOOK_URL` dans GitHub.
+
+6.  **Build Frontend "Baked-in" :**
+    *   L'image Docker du frontend nécessite `VITE_API_URL` au moment du build (`ARG`).
+    *   Cela signifie qu'on ne peut pas promouvoir la *même* image de Staging à Prod si l'URL de l'API change. Il faut rebuilder.
+
+---
+
+## 4. Recommandations & Plan d'Action
+
+### Étape 1 : Nettoyage & Fix Immédiats
+1.  **Renommer/Déplacer les Dockerfiles** ou corriger le `deploy.yml` pour pointer vers les bons fichiers.
+2.  **Nettoyer `package.json` (backend) :**
+    *   `npm uninstall pg`
+    *   Déplacer `mongodb-memory-server`, `chai`, `supertest` en `devDependencies`.
+3.  **Corriger la connexion Mongoose :** Retirer les options dépréciées et forcer l'arrêt si pas de DB.
+
+### Étape 2 : Configuration
+1.  **Harmoniser les ports :** Aligner le proxy Vite sur le port 5000 (ou changer le docker-compose pour 8089).
+2.  **Sécuriser le CI/CD :** Déplacer les URLs Coolify dans les secrets GitHub.
+
+### Étape 3 : Optimisation
+1.  **Linting :** Ajouter une configuration ESLint explicite (`.eslintrc.json` ou `eslint.config.js`) à la racine ou dans chaque projet pour standardiser le code.
+2.  **Tests :** S'assurer que les tests CI tournent effectivement (le script `test` du root lance backend et frontend).
+
+Ce rapport peut servir de base pour vos futurs prompts ("Corrige le point 1 du rapport", "Optimise le Dockerfile selon le point 6", etc.).

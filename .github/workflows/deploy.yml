@@ -43,95 +43,59 @@ jobs:
         run: npm run build
         env:
           CI: true
-          VITE_API_URL: http://localhost:5000
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://api.lexia-vae.fr' }}
 
-  # Build job
-  build:
-    name: 🏗️ Build Docker Images
-    runs-on: ubuntu-latest
+  # Build and Push Docker Images
+  build-push:
+    name: 🐳 Build & Push Docker Images
     needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
+    permissions:
+      contents: read
+      packages: write
+      
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-
+        
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: 🏗️ Build backend image
+        
+      - name: 🔑 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: 📦 Build and push Backend Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           file: ./backend/Dockerfile
-          push: false
-          tags: lexia-backend:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: 🏗️ Build frontend image
+          push: true
+          tags: ghcr.io/${{ github.repository }}/backend:latest
+          
+      - name: 📦 Build and push Frontend Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
-          push: false
-          tags: lexia-frontend:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          push: true
           build-args: |
-            VITE_API_URL=http://localhost:5000
+            VITE_API_URL=${{ secrets.VITE_API_URL || 'https://api.lexia-vae.fr' }}
+          tags: ghcr.io/${{ github.repository }}/frontend:latest
 
-  # Deploy job
+  # Deploy to Coolify
   deploy:
     name: 🚀 Deploy to Coolify
+    needs: build-push
     runs-on: ubuntu-latest
-    needs: [test, build]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🚀 Deploy MongoDB to Coolify
+      - name: 🚀 Trigger Coolify Deployment
         run: |
-          curl -X POST "http://168.231.86.146:8000/api/v1/deploy?uuid=k4wwoosgkc4gsk4480gc8ooc&force=false" \
-            -H "Content-Type: application/json" \
-            -d '{"ref": "${{ github.ref }}", "commit": "${{ github.sha }}"}'
-
-      - name: 🚀 Deploy Backend to Coolify
-        run: |
-          curl -X POST "http://168.231.86.146:8000/api/v1/deploy?uuid=dsgk000gcgg4wswogc4ogg8c&force=false" \
-            -H "Content-Type: application/json" \
-            -d '{"ref": "${{ github.ref }}", "commit": "${{ github.sha }}"}'
-
-      - name: 🚀 Deploy Frontend to Coolify
-        run: |
-          curl -X POST "http://168.231.86.146:8000/api/v1/deploy?uuid=v08wwkk04kw8o4osk0okocso&force=false" \
-            -H "Content-Type: application/json" \
-            -d '{"ref": "${{ github.ref }}", "commit": "${{ github.sha }}"}'
-
-      - name: ⏳ Wait for deployment
-        run: sleep 120 # Wait for all deployments to start
-
-  # Security scan
-  security:
-    name: 🔒 Security Scan
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🔍 Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-
-      - name: 📊 Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
+          curl --request GET '${{ secrets.COOLIFY_WEBHOOK_URL }}' --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}'

@@ -197,6 +197,17 @@ const userSchema = new mongoose.Schema({
   stripeCustomerId: {
     type: String
   },
+  // New fields for single offer
+  hasPaid: {
+    type: Boolean,
+    default: false
+  },
+  paymentDate: {
+    type: Date
+  },
+  stripeSessionId: {
+    type: String
+  },
   usageStats: {
     aiRequestsCount: {
       type: Number,
@@ -215,18 +226,15 @@ const userSchema = new mongoose.Schema({
       default: Date.now
     }
   }
-}, {
-  timestamps: true
 });
 
-// Index email supprimé - déjà défini dans init-mongo.js
 userSchema.index({ 'professionalInfo.skills': 1 });
 userSchema.index({ isActive: 1, role: 1 });
 
 // Hachage du mot de passe avant sauvegarde
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -237,12 +245,12 @@ userSchema.pre('save', async function(next) {
 });
 
 // Méthode pour comparer les mots de passe
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Méthode pour obtenir le profil utilisateur (sans données sensibles)
-userSchema.methods.getProfile = function() {
+userSchema.methods.getProfile = function () {
   const userObject = this.toObject();
   delete userObject.password;
   delete userObject.resetPasswordToken;
@@ -254,7 +262,7 @@ userSchema.methods.getProfile = function() {
 };
 
 // Méthode pour obtenir le profil public (informations limitées)
-userSchema.methods.getPublicProfile = function() {
+userSchema.methods.getPublicProfile = function () {
   return {
     id: this._id,
     firstName: this.firstName,
@@ -266,43 +274,43 @@ userSchema.methods.getPublicProfile = function() {
 };
 
 // Méthode pour mettre à jour le statut de connexion
-userSchema.methods.updateLoginStatus = async function(ipAddress, userAgent) {
+userSchema.methods.updateLoginStatus = async function (ipAddress, userAgent) {
   this.lastLogin = new Date();
   this.loginHistory.push({
     date: new Date(),
     ip: ipAddress,
     userAgent: userAgent
   });
-  
+
   // Limiter l'historique à 10 connexions
   if (this.loginHistory.length > 10) {
     this.loginHistory = this.loginHistory.slice(-10);
   }
-  
+
   // Mettre à jour les statistiques d'utilisation
   this.usageStats.lastActive = new Date();
-  
+
   return this.save();
 };
 
 // Méthode pour vérifier si l'abonnement est actif
-userSchema.methods.hasActiveSubscription = function() {
+userSchema.methods.hasActiveSubscription = function () {
   if (this.subscriptionStatus !== 'active' && this.subscriptionStatus !== 'trial') {
     return false;
   }
-  
+
   if (this.subscriptionExpiry && this.subscriptionExpiry < new Date()) {
     return false;
   }
-  
+
   return true;
 };
 
 // Méthode statique pour trouver un utilisateur par email
-userSchema.statics.findByEmail = function(email) {
+userSchema.statics.findByEmail = function (email) {
   return this.findOne({ email: email.toLowerCase() });
 };
 
 const User = mongoose.model('User', userSchema);
 
-module.exports = User; 
+module.exports = User;

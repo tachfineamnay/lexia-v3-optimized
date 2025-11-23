@@ -1,48 +1,61 @@
-# Multi-stage build for optimized production image
+# Multi-stage build for React frontend
 FROM node:18-alpine AS builder
 
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY frontend/package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies (including dev dependencies for build)
+RUN npm ci
 
-# Copy source files
-COPY . .
+# Copy source code
+COPY frontend/ .
 
-# Build the application with proper environment
-ARG VITE_API_URL=http://localhost:5000
-ENV VITE_API_URL=$VITE_API_URL
+# Build the application
+# VITE_API_URL must be passed as a build argument.
+# Example: --build-arg VITE_API_URL=https://api.example.com
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
 ENV NODE_ENV=production
 
+# Validate that the API URL was provided
+RUN if [ -z "$VITE_API_URL" ]; then \
+      echo "Error: VITE_API_URL build-arg is required." >&2; \
+      exit 1; \
+    fi
+
+# Log the API URL being used for the build
+RUN echo "Building with VITE_API_URL: $VITE_API_URL"
+
+# Build the production app
 RUN npm run build
 
-# Production stage with optimized nginx
+# Production stage
 FROM nginx:alpine AS production
 
 # Install curl for health checks
 RUN apk add --no-cache curl
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom nginx configuration
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy built files
+# Copy built application from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Create health check endpoint
-RUN echo 'OK' > /usr/share/nginx/html/health.txt
+# Add health check file
+RUN echo "OK" > /usr/share/nginx/html/health.txt
 
 # Set proper permissions
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chmod -R 755 /usr/share/nginx/html
 
-# Enhanced health check
+# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:80/health.txt || exit 1
 
+# Expose port
 EXPOSE 80
 
-# Use nginx in foreground mode
+# Start nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]

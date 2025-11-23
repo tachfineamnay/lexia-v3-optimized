@@ -7,46 +7,46 @@ const jwt = require('jsonwebtoken');
 const authMiddleware = (req, res, next) => {
   // Récupérer le token depuis les headers (Authorization: Bearer token)
   const authHeader = req.header('Authorization');
-  const token = authHeader && authHeader.startsWith('Bearer ') 
-    ? authHeader.substring(7) 
-    : req.header('x-auth-token') || 
-      req.query.token || 
-      (req.cookies ? req.cookies['auth-token'] : null);
+  const token = authHeader && authHeader.startsWith('Bearer ')
+    ? authHeader.substring(7)
+    : req.header('x-auth-token') ||
+    req.query.token ||
+    (req.cookies ? req.cookies['auth-token'] : null);
 
   // Vérifier si un token est présent
   if (!token) {
-    return res.status(401).json({ 
-      success: false, 
-      error: 'Non authentifié' 
+    return res.status(401).json({
+      success: false,
+      error: 'Non authentifié'
     });
   }
 
   try {
     // Vérifier le token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-  // Ajouter les infos utilisateur à la requête
-  const payload = decoded.user || decoded;
-  // Normalize: always provide both id and userId if possible
-  req.user = Object.assign({}, payload);
-  if (!req.user.id && req.user.userId) req.user.id = req.user.userId;
-  if (!req.user.userId && req.user.id) req.user.userId = req.user.id;
-    
+
+    // Ajouter les infos utilisateur à la requête
+    const payload = decoded.user || decoded;
+    // Normalize: always provide both id and userId if possible
+    req.user = Object.assign({}, payload);
+    if (!req.user.id && req.user.userId) req.user.id = req.user.userId;
+    if (!req.user.userId && req.user.id) req.user.userId = req.user.id;
+
     next();
   } catch (err) {
     console.error('Erreur d\'authentification:', err.message);
-    
+
     if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ 
-        success: false, 
+      return res.status(401).json({
+        success: false,
         error: 'Token expiré, veuillez vous reconnecter',
         expired: true
       });
     }
-    
-    return res.status(401).json({ 
-      success: false, 
-      error: 'Token invalide' 
+
+    return res.status(401).json({
+      success: false,
+      error: 'Token invalide'
     });
   }
 };
@@ -58,24 +58,136 @@ const authMiddleware = (req, res, next) => {
 const adminMiddleware = (req, res, next) => {
   // Vérifier que l'utilisateur est authentifié
   if (!req.user) {
-    return res.status(401).json({ 
-      success: false, 
-      message: 'Authentification requise' 
+    return res.status(401).json({
+      success: false,
+      message: 'Authentification requise'
     });
   }
 
   // Vérifier le rôle admin
   if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-    return res.status(403).json({ 
-      success: false, 
-      message: 'Accès refusé, droits administrateur requis' 
-    });
-  }
+    const jwt = require('jsonwebtoken');
 
-  next();
-};
+    /**
+     * Middleware pour vérifier le JWT et authentifier les utilisateurs
+     * Ajoute req.user si authentifié correctement
+     */
+    const authMiddleware = (req, res, next) => {
+      // Récupérer le token depuis les headers (Authorization: Bearer token)
+      const authHeader = req.header('Authorization');
+      const token = authHeader && authHeader.startsWith('Bearer ')
+        ? authHeader.substring(7)
+        : req.header('x-auth-token') ||
+        req.query.token ||
+        (req.cookies ? req.cookies['auth-token'] : null);
 
-module.exports = {
-  authMiddleware,
-  adminMiddleware
-}; 
+      // Vérifier si un token est présent
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          error: 'Non authentifié'
+        });
+      }
+
+      try {
+        // Vérifier le token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Ajouter les infos utilisateur à la requête
+        const payload = decoded.user || decoded;
+        // Normalize: always provide both id and userId if possible
+        req.user = Object.assign({}, payload);
+        if (!req.user.id && req.user.userId) req.user.id = req.user.userId;
+        if (!req.user.userId && req.user.id) req.user.userId = req.user.id;
+
+        next();
+      } catch (err) {
+        console.error('Erreur d\'authentification:', err.message);
+
+        if (err.name === 'TokenExpiredError') {
+          return res.status(401).json({
+            success: false,
+            error: 'Token expiré, veuillez vous reconnecter',
+            expired: true
+          });
+        }
+
+        return res.status(401).json({
+          success: false,
+          error: 'Token invalide'
+        });
+      }
+    };
+
+    /**
+     * Middleware pour vérifier si l'utilisateur est administrateur
+     * Doit être utilisé après authMiddleware
+     */
+    const adminMiddleware = (req, res, next) => {
+      // Vérifier que l'utilisateur est authentifié
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentification requise'
+        });
+      }
+
+      // Vérifier le rôle admin
+      if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Accès refusé, droits administrateur requis'
+        });
+      }
+
+      next();
+    };
+
+    /**
+     * Middleware pour vérifier si l'utilisateur a payé
+     * Doit être utilisé après authMiddleware
+     */
+    const requirePayment = async (req, res, next) => {
+      // Vérifier que l'utilisateur est authentifié
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentification requise'
+        });
+      }
+
+      // Admin bypass payment check
+      if (req.user.role === 'admin' || req.user.role === 'super_admin') {
+        return next();
+      }
+
+      try {
+        // Need to fetch fresh user data to check payment status
+        // We can't rely solely on the token payload as payment status might have changed
+        const User = require('../models/user');
+        const user = await User.findById(req.user.userId || req.user.id);
+
+        if (!user) {
+          return res.status(404).json({ message: 'Utilisateur introuvable' });
+        }
+
+        if (!user.hasPaid) {
+          return res.status(402).json({
+            success: false,
+            message: 'Paiement requis pour accéder à cette fonctionnalité',
+            requiresPayment: true
+          });
+        }
+
+        next();
+      } catch (err) {
+        console.error('Erreur vérification paiement:', err);
+        res.status(500).json({ message: 'Erreur serveur' });
+      }
+    };
+
+    module.exports = {
+      authMiddleware,
+      adminMiddleware,
+      requirePayment
+    };

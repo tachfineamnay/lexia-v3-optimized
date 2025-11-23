@@ -37,8 +37,8 @@ app.use(helmet());
 // Configuration CORS
 app.use(cors({
   origin: process.env.CORS_ORIGIN?.split(',') || ['https://app.ialexia.fr'],
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
 // Écoute les requêtes OPTIONS
@@ -100,10 +100,10 @@ try {
 }
 
 try {
-  app.use('/api/dashboard', require('./routes/dashboard'));
-  console.log('✓ Dashboard routes loaded');
+  app.use('/api/payment', require('./routes/payment'));
+  console.log('✓ Payment routes loaded');
 } catch (err) {
-  console.error('❌ Error loading dashboard routes:', err.message);
+  console.error('❌ Error loading payment routes:', err.message);
 }
 
 // Mount config routes (admin-only)
@@ -128,7 +128,7 @@ app.get('/api/health', (req, res) => {
     uptime: process.uptime(),
     memory: process.memoryUsage()
   };
-  
+
   console.log('🔍 Health check requested:', health.status);
   res.json(health);
 });
@@ -164,68 +164,70 @@ if (require.main === module) {
   const mongoUri = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/lexiav4';
   console.log('🔗 Attempting MongoDB connection to:', mongoUri.replace(/\/\/.*@/, '//***:***@'));
 
-  mongoose.connect(mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
-  .then(() => {
-    console.log('✅ Connecté à MongoDB');
-    console.log('🔗 MongoDB connection state:', mongoose.connection.readyState);
-  })
-  .catch(err => {
-    console.error('❌ Erreur connexion MongoDB:', err.message);
-    console.log('🔄 Application will continue without database connection');
-  });
+  mongoose.connect(mongoUri)
+    .then(() => {
+      console.log('✅ Connecté à MongoDB');
+      console.log('🔗 MongoDB connection state:', mongoose.connection.readyState);
+    })
+    .catch(err => {
+      console.error('❌ Erreur connexion MongoDB:', err.message);
+      console.error('🚨 Fatal Error: Database connection failed. Exiting...');
+      process.exit(1);
+    });
 
   // Démarrage du serveur
   const PORT = process.env.PORT || 5000;
   const HOST = process.env.HOST || '0.0.0.0';
 
-  console.log('🚀 Starting LexiaV4 server...');
-  console.log('📊 Server configuration:');
-  console.log(`  - Port: ${PORT}`);
-  console.log(`  - Host: ${HOST}`);
-  console.log(`  - Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`  - CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
-  console.log('📞 Attempting to bind to address...');
+  try {
+    console.log('🚀 Starting LexiaV4 server...');
+    console.log('📊 Server configuration:');
+    console.log(`  - Port: ${PORT}`);
+    console.log(`  - Host: ${HOST}`);
+    console.log(`  - Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`  - CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
+    console.log('📞 Attempting to bind to address...');
 
-  const server = app.listen(PORT, HOST, () => {
-    console.log(`🚀 Serveur LexiaV4 démarré sur ${HOST}:${PORT}`);
-    console.log(`📍 Environnement: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 Health check available at: http://${HOST}:${PORT}/api/health`);
-    console.log(`📋 API info available at: http://${HOST}:${PORT}/api`);
-    console.log(`🧪 Test endpoint available at: http://${HOST}:${PORT}/api/test`);
-    console.log('✅ Server is ready to accept connections!');
-  });
+    const server = app.listen(PORT, HOST, () => {
+      console.log(`🚀 Serveur LexiaV4 démarré sur ${HOST}:${PORT}`);
+      console.log(`📍 Environnement: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔗 Health check available at: http://${HOST}:${PORT}/api/health`);
+      console.log(`📋 API info available at: http://${HOST}:${PORT}/api`);
+      console.log(`🧪 Test endpoint available at: http://${HOST}:${PORT}/api/test`);
+      console.log('✅ Server is ready to accept connections!');
+    });
 
-  // Server error handling
-  server.on('error', (err) => {
-    console.error('🚨 Server error:', err);
-    if (err.code === 'EADDRINUSE') {
-      console.error(`❌ Port ${PORT} is already in use`);
-    } else if (err.code === 'EADDRNOTAVAIL') {
-      console.error(`❌ Address ${HOST} is not available`);
-    }
+    // Server error handling
+    server.on('error', (err) => {
+      console.error('🚨 Server error:', err);
+      if (err.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${PORT} is already in use`);
+      } else if (err.code === 'EADDRNOTAVAIL') {
+        console.error(`❌ Address ${HOST} is not available`);
+      }
+      process.exit(1);
+    });
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM received, shutting down gracefully');
+      server.close(() => {
+        console.log('Process terminated');
+        process.exit(0);
+      });
+    });
+
+    process.on('SIGINT', () => {
+      console.log('SIGINT received, shutting down gracefully');
+      server.close(() => {
+        console.log('Process terminated');
+        process.exit(0);
+      });
+    });
+  } catch (err) {
+    console.error('❌ Error starting server:', err);
     process.exit(1);
-  });
-
-  // Graceful shutdown
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully');
-    server.close(() => {
-      console.log('Process terminated');
-      process.exit(0);
-    });
-  });
-
-  process.on('SIGINT', () => {
-    console.log('SIGINT received, shutting down gracefully');
-    server.close(() => {
-      console.log('Process terminated');
-      process.exit(0);
-    });
-  });
-
+  }
 }
 
 // Create necessary directories
@@ -255,7 +257,7 @@ app.get('/api', (req, res) => {
       '/api/test',
       '/api/auth',
       '/api/users',
-  '/api/config',
+      '/api/config',
       '/api/vae',
       '/api/documents',
       '/api/ai',
@@ -275,7 +277,5 @@ app.get('/api/test', (req, res) => {
     query: req.query
   });
 });
-
-// Note: Server startup is handled when this module is executed directly (see above).
 
 module.exports = app;

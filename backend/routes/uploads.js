@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, requirePayment } = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
 const Upload = require('../models/upload');
 const Dossier = require('../models/dossier');
@@ -16,13 +16,13 @@ const storage = multer.diskStorage({
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
-    
+
     // Créer un sous-dossier pour chaque utilisateur
     const userDir = path.join(uploadDir, req.user.id.toString());
     if (!fs.existsSync(userDir)) {
       fs.mkdirSync(userDir, { recursive: true });
     }
-    
+
     cb(null, userDir);
   },
   filename: (req, file, cb) => {
@@ -38,10 +38,10 @@ const fileFilter = (req, file, cb) => {
   // Accepter uniquement les fichiers PDF, JPG et PNG
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
   const allowedExt = ['.pdf', '.jpg', '.jpeg', '.png'];
-  
+
   const mimetype = allowedTypes.includes(file.mimetype);
   const extname = allowedExt.includes(path.extname(file.originalname).toLowerCase());
-  
+
   if (mimetype && extname) {
     return cb(null, true);
   } else {
@@ -63,7 +63,7 @@ const upload = multer({
  * @desc    Téléverser un fichier
  * @access  Private
  */
-router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
+router.post('/', authMiddleware, requirePayment, upload.single('file'), async (req, res) => {
   try {
     // Vérifier si le fichier existe
     if (!req.file) {
@@ -75,10 +75,10 @@ router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
 
     // Récupérer les métadonnées depuis le formulaire
     const { type, description, dossier, tags } = req.body;
-    
+
     // Extraire l'extension
     const extension = path.extname(req.file.originalname).substring(1);
-    
+
     // Créer un nouvel enregistrement Upload
     const newUpload = new Upload({
       filename: req.file.filename,
@@ -95,10 +95,10 @@ router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
       dossier: dossier || null,
       tags: tags ? tags.split(',').map(tag => tag.trim()) : []
     });
-    
+
     // Sauvegarder l'enregistrement
     await newUpload.save();
-    
+
     // Si un dossier est spécifié, ajouter la référence au dossier
     if (dossier) {
       await Dossier.findByIdAndUpdate(
@@ -106,7 +106,7 @@ router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
         { $push: { uploads: newUpload._id } }
       );
     }
-    
+
     res.status(201).json({
       success: true,
       message: 'Fichier téléversé avec succès',
@@ -133,18 +133,18 @@ router.get('/', authMiddleware, async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 10, 50); // Max 50 items
     const skip = (page - 1) * limit;
-    
+
     // Filtre optionnel par type
     const filter = { user: req.user.id };
     if (req.query.type) {
       filter['metadata.type'] = req.query.type;
     }
-    
+
     // Filtre optionnel par dossier
     if (req.query.dossier) {
       filter.dossier = req.query.dossier;
     }
-    
+
     // Filtre de recherche dans le nom du fichier
     if (req.query.search) {
       filter.$or = [
@@ -153,16 +153,16 @@ router.get('/', authMiddleware, async (req, res) => {
         { tags: { $in: [new RegExp(req.query.search, 'i')] } }
       ];
     }
-    
+
     // Compter le nombre total pour la pagination
     const total = await Upload.countDocuments(filter);
-    
+
     // Récupérer les uploads
     const uploads = await Upload.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
-    
+
     res.json({
       success: true,
       page,
@@ -189,14 +189,14 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const upload = await Upload.findById(req.params.id);
-    
+
     if (!upload) {
       return res.status(404).json({
         success: false,
         message: 'Fichier introuvable'
       });
     }
-    
+
     // Vérifier les droits d'accès (propriétaire ou admin)
     if (upload.user.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
@@ -204,7 +204,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
         message: 'Accès non autorisé à ce fichier'
       });
     }
-    
+
     res.json({
       success: true,
       upload
@@ -227,14 +227,14 @@ router.get('/:id', authMiddleware, async (req, res) => {
 router.get('/:id/download', authMiddleware, async (req, res) => {
   try {
     const upload = await Upload.findById(req.params.id);
-    
+
     if (!upload) {
       return res.status(404).json({
         success: false,
         message: 'Fichier introuvable'
       });
     }
-    
+
     // Vérifier les droits d'accès
     if (upload.user.toString() !== req.user.id && req.user.role !== 'admin' && !upload.isPublic) {
       return res.status(403).json({
@@ -242,7 +242,7 @@ router.get('/:id/download', authMiddleware, async (req, res) => {
         message: 'Accès non autorisé à ce fichier'
       });
     }
-    
+
     // Vérifier si le fichier existe sur le disque
     if (!fs.existsSync(upload.path)) {
       return res.status(404).json({
@@ -250,7 +250,7 @@ router.get('/:id/download', authMiddleware, async (req, res) => {
         message: 'Fichier physique introuvable'
       });
     }
-    
+
     // Servir le fichier
     res.download(upload.path, upload.originalName);
   } catch (error) {
@@ -271,14 +271,14 @@ router.get('/:id/download', authMiddleware, async (req, res) => {
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const upload = await Upload.findById(req.params.id);
-    
+
     if (!upload) {
       return res.status(404).json({
         success: false,
         message: 'Fichier introuvable'
       });
     }
-    
+
     // Vérifier les droits d'accès
     if (upload.user.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
@@ -286,7 +286,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
         message: 'Vous n\'êtes pas autorisé à supprimer ce fichier'
       });
     }
-    
+
     // Si le fichier est attaché à un dossier, le retirer de la liste des uploads du dossier
     if (upload.dossier) {
       await Dossier.findByIdAndUpdate(
@@ -294,15 +294,15 @@ router.delete('/:id', authMiddleware, async (req, res) => {
         { $pull: { uploads: upload._id } }
       );
     }
-    
+
     // Supprimer le fichier physique si présent
     if (fs.existsSync(upload.path)) {
       fs.unlinkSync(upload.path);
     }
-    
+
     // Supprimer l'enregistrement
     await upload.remove();
-    
+
     res.json({
       success: true,
       message: 'Fichier supprimé avec succès'
@@ -325,14 +325,14 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const upload = await Upload.findById(req.params.id);
-    
+
     if (!upload) {
       return res.status(404).json({
         success: false,
         message: 'Fichier introuvable'
       });
     }
-    
+
     // Vérifier les droits d'accès
     if (upload.user.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
@@ -340,23 +340,23 @@ router.put('/:id', authMiddleware, async (req, res) => {
         message: 'Vous n\'êtes pas autorisé à modifier ce fichier'
       });
     }
-    
+
     // Champs modifiables
     const { dossier, description, isPublic, tags } = req.body;
-    
+
     // Mettre à jour les champs
     if (description !== undefined) {
       upload.metadata.set('description', description);
     }
-    
+
     if (isPublic !== undefined) {
       upload.isPublic = isPublic;
     }
-    
+
     if (tags !== undefined) {
       upload.tags = tags.split(',').map(tag => tag.trim());
     }
-    
+
     // Gérer l'association avec un dossier
     if (dossier !== undefined && dossier !== upload.dossier?.toString()) {
       // Si était attaché à un dossier précédent, le retirer
@@ -366,7 +366,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
           { $pull: { uploads: upload._id } }
         );
       }
-      
+
       // Attacher au nouveau dossier
       if (dossier) {
         await Dossier.findByIdAndUpdate(
@@ -378,10 +378,10 @@ router.put('/:id', authMiddleware, async (req, res) => {
         upload.dossier = null;
       }
     }
-    
+
     // Sauvegarder les modifications
     await upload.save();
-    
+
     res.json({
       success: true,
       message: 'Fichier mis à jour avec succès',
@@ -397,4 +397,4 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;
