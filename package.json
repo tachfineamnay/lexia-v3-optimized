@@ -5,7 +5,9 @@
   "scripts": {
     "start": "docker-compose up -d",
     "stop": "docker-compose down",
-    "build": "docker-compose build",
+    "build": "npm run install:frontend && npm run build:frontend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:docker": "docker-compose build",
     "restart": "docker-compose restart",
     "logs": "docker-compose logs -f",
     "clean": "docker system prune -af",
