@@ -1,8 +1,8 @@
 module.exports = {
   offer: {
-    price: 4900, // Price in cents
+    price: 8900, // Price in cents (89€)
     currency: 'eur',
-    name: 'Offre VAE Unique',
-    description: 'Accès complet à la plateforme VAE : génération illimitée, support IA, export PDF/DOCX.'
+    name: 'VAE Facile - Offre Tout Compris',
+    description: 'Pack complet : Génération automatique livret 2, version audio, corrections illimitées, relecture experte et coaching inclus.'
   }
 };
