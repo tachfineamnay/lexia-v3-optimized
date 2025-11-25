@@ -1,14 +1,31 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-fuchsia: #FF2E63;
-  --color-brand-creme: #FFFBF7;
-  --color-brand-sage: #A7D9B8;
-  --color-brand-pink: #FFF4F4;
-  --color-brand-slate: #1E293B;
-  --color-brand-white: #FFFFFF;
+  /* Primary Tech Colors - French Inspired */
+  --color-brand-blue: #2563EB;
+  --color-brand-blue-dark: #1E40AF;
+  --color-brand-blue-light: #DBEAFE;
+  --color-brand-blue-50: #EFF6FF;
 
-  --font-sans: "Inter", "Roboto", sans-serif;
+  --color-brand-red: #EF4444;
+  --color-brand-red-dark: #DC2626;
+  --color-brand-red-light: #FEE2E2;
+
+  --color-brand-white: #FFFFFF;
+  --color-brand-gray-50: #F8FAFC;
+  --color-brand-gray-100: #F1F5F9;
+  --color-brand-gray-200: #E2E8F0;
+  --color-brand-gray-600: #475569;
+  --color-brand-gray-900: #0F172A;
+  --color-brand-slate: #1E293B;
+
+  /* AI & Success Colors */
+  --color-brand-purple: #8B5CF6;
+  --color-brand-purple-light: #EDE9FE;
+  --color-brand-green: #10B981;
+  --color-brand-green-light: #D1FAE5;
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Custom Utilities if needed */
@@ -19,5 +36,14 @@
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 font-sans antialiased;
+  @apply bg-white text-slate-900 font-sans antialiased;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  @apply transition-colors duration-200;
+}
+
+button, a {
+  @apply transition-all duration-200;
 }
