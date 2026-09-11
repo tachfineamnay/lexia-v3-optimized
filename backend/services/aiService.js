@@ -3,12 +3,32 @@ const OpenAI = require('openai');
 
 class AIService {
     constructor() {
-        this.openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-        });
+        this._openai = null;
+        this._genAI = null;
+        this._geminiModel = null;
+    }
 
-        this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-        this.geminiModel = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+    get openai() {
+        if (!this._openai) {
+            const apiKey = process.env.OPENAI_API_KEY;
+            if (!apiKey) {
+                throw new Error('OPENAI_API_KEY is not configured');
+            }
+            this._openai = new OpenAI({ apiKey });
+        }
+        return this._openai;
+    }
+
+    get geminiModel() {
+        if (!this._geminiModel) {
+            const apiKey = process.env.GOOGLE_AI_API_KEY;
+            if (!apiKey) {
+                throw new Error('GOOGLE_AI_API_KEY is not configured');
+            }
+            this._genAI = new GoogleGenerativeAI(apiKey);
+            this._geminiModel = this._genAI.getGenerativeModel({ model: 'gemini-pro' });
+        }
+        return this._geminiModel;
     }
 
     async generateLivret1(userProfile, documents) {

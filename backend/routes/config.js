@@ -145,10 +145,11 @@ router.post('/:category', authMiddleware, adminMiddleware, async (req, res) => {
     
     await systemConfig.save();
     
-    // Update process.env for immediate effect
-    configs.forEach(config => {
-      if (!template?.encrypted) {
-        process.env[config.key] = config.value;
+    // Update process.env for immediate effect (skip encrypted values)
+    configs.forEach(configItem => {
+      const tpl = CONFIG_TEMPLATES[category]?.[configItem.key];
+      if (!tpl?.encrypted) {
+        process.env[configItem.key] = configItem.value;
       }
     });
     
