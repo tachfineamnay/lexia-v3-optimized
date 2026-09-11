@@ -35,8 +35,11 @@ const app = express();
 app.use(helmet());
 
 // Configuration CORS
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+  : ['http://localhost:3000', 'http://localhost:5173', 'http://frontend'];
 app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || ['https://app.ialexia.fr'],
+  origin: corsOrigins,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -112,6 +115,30 @@ try {
   console.log('✓ Config routes loaded');
 } catch (err) {
   console.error('❌ Error loading config routes:', err.message);
+}
+
+// Mount dashboard routes
+try {
+  app.use('/api/dashboard', require('./routes/dashboard'));
+  console.log('✓ Dashboard routes loaded');
+} catch (err) {
+  console.error('❌ Error loading dashboard routes:', err.message);
+}
+
+// Mount dossiers routes
+try {
+  app.use('/api/dossiers', require('./routes/dossiers'));
+  console.log('✓ Dossiers routes loaded');
+} catch (err) {
+  console.error('❌ Error loading dossiers routes:', err.message);
+}
+
+// Mount uploads routes
+try {
+  app.use('/api/uploads', require('./routes/uploads'));
+  console.log('✓ Uploads routes loaded');
+} catch (err) {
+  console.error('❌ Error loading uploads routes:', err.message);
 }
 
 // Route de santé

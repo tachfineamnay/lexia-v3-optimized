@@ -43,15 +43,48 @@ services:
       dockerfile: Dockerfile.backend
     container_name: lexia-backend
     restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 5000
-    environment:
-      - NODE_ENV=production
+      HOST: 0.0.0.0
+      MONGODB_URI: mongodb://${DB_USER:-lexia}:${DB_PASSWORD:-lexia_secure_password}@mongodb:27017/lexia_v4?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-at-least-32-chars}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-change-me-refresh-secret-at-least-32}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      REDIS_URL: redis://redis:6379
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:-}
+    volumes:
+      - uploads_data:/app/uploads
+      - exports_data:/app/exports
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
+    container_name: lexia-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
 
 volumes:
   mongodb_data:
   redis_data:
+  uploads_data:
+  exports_data:
 
 networks:
   default:

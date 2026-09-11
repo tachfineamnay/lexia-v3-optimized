@@ -7,7 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const Dossier = require('../models/dossier');
 const documentGenerator = require('../services/documentGenerator');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 
 // Configure storage for uploaded files
 const storage = multer.diskStorage({
